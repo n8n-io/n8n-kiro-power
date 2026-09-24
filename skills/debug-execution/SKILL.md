@@ -56,7 +56,8 @@ credential" is not a diagnosis when you can read the error.
 
 - Apply the fix with `update_workflow`, then `test_workflow` and read the result.
   A fix that has not been re-run is a hypothesis.
-- For intermittent failures, prefer `setNodeSettings` with `retryOnFail` and
+- For intermittent failures, prefer an `update_workflow` call with a
+  `setNodeSettings` operation setting `retryOnFail` and
   `maxTries` over restructuring the workflow.
 - If the fix needs error handling the workflow does not have, explain the options
   and ask. Do not add an Error Trigger or an error workflow silently.

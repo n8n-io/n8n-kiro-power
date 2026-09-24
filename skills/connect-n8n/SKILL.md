@@ -14,8 +14,9 @@ n8n tool call. Do not skip it because the config file looks populated.
 ## Pre-flight
 
 **A populated `mcp.json` does not prove a working connection.** It proves a file
-was written. The URL comes from an environment variable and the auth comes from a
-browser flow, so both can be missing while the config looks correct.
+was written. The host still has to be filled in and reachable, and the OAuth flow
+still has to have been completed in a browser, so both can be missing while the
+config looks correct.
 
 Before you use any n8n tool, confirm all three:
 
@@ -23,9 +24,12 @@ Before you use any n8n tool, confirm all three:
    available tools, the power is installed but the server did not start.
 2. **The URL is a real host.** The shipped entry has the placeholder
    `YOUR-N8N-HOST`. If that is still there, it was never configured.
-3. **A tool call succeeds.** Call `search_workflows` with no filter. It is cheap,
-   read-only, and it fails in a way that tells you which of the two problems above
-   you have.
+3. **A tool call succeeds.** Pick the cheapest read-only tool the server actually
+   lists, such as a workflow search with no filter, and call it. Use whatever is
+   listed rather than a name from memory: the grant decides which tools exist,
+   and a tool absent from the list was not granted. If the only tools listed are
+   write tools, that is still a working connection, so say so and stop rather
+   than calling one to prove it.
 
 If step 3 succeeds, say so once and continue. Do not repeat the check later in the
 same conversation.
@@ -71,7 +75,7 @@ Work through these in order and report what you find:
   toggle. This is the most common cause.
 - **The URL is missing the path.** The base host alone is not the endpoint. It
   must end in `/mcp-server/http`.
-- **Kiro cannot reach the host.** See the section below.
+- **Kiro cannot reach the host.** See the section above.
 
 ## When authorization fails
 

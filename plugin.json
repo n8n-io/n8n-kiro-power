@@ -1,7 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "n8n",
-  "displayName": "n8n",
   "version": "1.0.0",
   "description": "Build, run, and debug n8n workflows in your own n8n instance, wired to the code in your workspace. Connects to the MCP server built in to every instance over OAuth, with no API key to paste.",
   "author": {

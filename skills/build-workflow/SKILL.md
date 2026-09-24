@@ -54,15 +54,34 @@ against a working endpoint.
 
 The build loop has a verification step and it is not optional.
 
-- `validate_workflow` before you save. A validation error is cheaper than a failed
-  run.
-- `test_workflow` after you save, and **read the result**. A saved workflow is not
-  a working workflow.
+- Validate before you save. A validation error is cheaper than a failed run.
+- Test after you save, and **read the result**. A saved workflow is not a working
+  workflow.
 - Report what the test actually returned. If it failed, say so and fix it. Do not
   describe an untested workflow as done.
 
-Use `prepare_workflow_pin_data` when a trigger cannot fire in a test, so the run
-has realistic input.
+Pin data lets a workflow run when its trigger cannot fire. Generate it with the
+pin-data tool the server lists, then pass it to the test.
+
+### A test run is not a dry run
+
+Testing pins triggers, credentialed nodes, and HTTP Request nodes, so those are
+simulated. **Everything else executes for real**, including credential-free nodes
+that touch the outside world: Execute Command, file reads and writes, and Code
+nodes that do their own I/O.
+
+So before the first test run, look at what the workflow will actually do.
+
+- If every unpinned node is pure data shaping (Set, If, Merge, plain Code), test
+  without asking.
+- If any unpinned node writes a file, runs a command, sends a message, or changes
+  state anywhere, **say what will happen and get confirmation first.** Name the
+  node and the effect. "This will run `Execute Command` against your machine, and
+  the Slack node will post to #general. Test it?"
+- If the user declines, validate and stop there. Tell them the workflow is
+  unverified and why, rather than quietly calling it done.
+
+Pinning the side-effecting node is often the better answer. Offer it.
 
 ## Publishing
 
