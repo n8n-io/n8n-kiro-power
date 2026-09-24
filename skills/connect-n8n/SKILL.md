@@ -1,3 +1,11 @@
+---
+name: connect-n8n
+description: "Check and fix the connection to the n8n MCP server before any n8n tool is used. Run this on the first turn of a conversation that touches n8n. Use when the n8n server shows no tools, when a connection is refused or times out, when authorization fails or a call returns 401, when a tool the user expected is absent, or when the user asks how to set up or configure the n8n power. Triggers: No tools available, failed to connect to n8n, n8n MCP not working, set up n8n, configure n8n instance URL, n8n 401, n8n unauthorized, YOUR-N8N-HOST."
+metadata:
+  author: n8n
+  version: "1.0.0"
+---
+
 # Connecting to n8n
 
 Run this check on the first turn of a new conversation in this power, before any

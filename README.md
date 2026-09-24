@@ -7,6 +7,23 @@ This power connects Kiro to the MCP server built in to every n8n instance. The
 agent can create workflows, test them, read execution history to debug a failure,
 and inspect what is already on the instance.
 
+## What it does
+
+- **Build workflows** with the n8n Workflow SDK, including node discovery, type
+  definitions, and validation before saving
+- **Run and test**, so a build is verified and not only written
+- **Debug**: search execution history, open a failed run, find the node that
+  failed
+- **Inspect the instance**: workflows, projects, folders, tags, credentials, and
+  data tables
+- **Build Agents**: create and call first-class n8n Agents, when the instance has
+  them enabled
+- **Version control**: read workflow history, compare versions, restore one
+
+The reason to run this in an editor rather than a chat client is the workspace.
+The agent reads your code, so it can wire a webhook to the endpoint you are
+actually writing, and match a request body to the type in your repo.
+
 ## Requirements
 
 - An n8n instance that Kiro can reach
@@ -43,7 +60,7 @@ URL is not a secret: it is the address of your instance, and access is controlle
 by OAuth.
 
 **3. Approve access.** Kiro opens a browser window. n8n shows a consent screen
-listing the scopes Kiro is asking for. Approve the ones you want.
+listing what Kiro is asking for. Grant what you want.
 
 There is no API key and no token to paste. n8n uses OAuth 2.1 with dynamic client
 registration, so Kiro registers itself.
@@ -54,9 +71,8 @@ reachable from one.
 
 ## What the agent can do
 
-You decide that on the consent screen. n8n lists what Kiro is asking for and you
-grant what you want. Which tools appear afterwards follows from that choice, so
-a tool that is missing was simply not granted.
+You decide that on the consent screen. Which tools appear follows from what you
+granted, so a tool that is missing was simply not granted.
 
 You can change the grant at any time by reconnecting, or revoke it in n8n under
 **Settings > Instance-level MCP**.
@@ -64,6 +80,19 @@ You can change the grant at any time by reconnecting, or revoke it in n8n under
 **Point this at a development instance first.** If you grant write and execute,
 the agent can create, update, run, and publish workflows. A published workflow
 with a schedule or a webhook starts real work against real systems.
+
+## Skills
+
+| Skill | Loads when |
+|---|---|
+| `connect-n8n` | First use, or when the connection or authorization fails |
+| `build-workflow` | Creating or changing a workflow |
+| `debug-execution` | A workflow failed or started behaving differently |
+
+The skills deliberately do not restate the MCP server's own build instructions.
+The server sends those when it connects, so a copy here would drift. The skills
+cover what the server cannot know: whether the connection is real, what is in
+your workspace, and how to triage a failed run.
 
 ## Privacy
 

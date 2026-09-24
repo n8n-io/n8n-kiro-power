@@ -1,3 +1,11 @@
+---
+name: debug-execution
+description: "Diagnose an n8n workflow that failed, produced the wrong result, or stopped running, working from execution data rather than the workflow definition. Use when the user reports a broken, failing, or flaky workflow, asks why a run failed, or asks what changed. Triggers: my n8n workflow failed, why did this workflow break, n8n execution error, workflow stopped working, debug this workflow, intermittent failures."
+metadata:
+  author: n8n
+  version: "1.0.0"
+---
+
 # Debugging a failed n8n workflow
 
 Use this when a workflow failed, produced the wrong result, or stopped running.

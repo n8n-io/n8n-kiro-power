@@ -1,3 +1,11 @@
+---
+name: build-workflow
+description: "Build an n8n workflow using the code open in the workspace, then validate and test it before calling it done. Use when the user asks to create, build, or change an n8n workflow, to automate a task, to add a scheduled job or a webhook, or to connect n8n to the application in this repository. Triggers: build an n8n workflow, automate this, add a webhook, schedule this, wire n8n to my API, create a workflow."
+metadata:
+  author: n8n
+  version: "1.0.0"
+---
+
 # Building n8n workflows from Kiro
 
 The n8n MCP server sends its own build instructions when it connects. Those cover
