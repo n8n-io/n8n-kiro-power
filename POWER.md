@@ -96,20 +96,31 @@ enabled. A tool that is absent was not granted, or the feature is off.
 
 ## Configuration
 
-**Set one environment variable before you install.**
+This power ships two server entries. Use the one that matches your instance.
 
-```bash
-export N8N_MCP_URL="https://your-instance.app.n8n.cloud/mcp-server/http"
+### Self-hosted on the default port
+
+Nothing to edit. Enable the `n8n-local` server, which points at
+`http://localhost:5678/mcp-server/http`.
+
+### Cloud, or a self-hosted instance on another host
+
+Edit the `n8n` server in `mcp.json` and replace the placeholder with your URL:
+
+```json
+"url": "https://your-instance.app.n8n.cloud/mcp-server/http"
 ```
 
-Self-hosted instances use the same path on their own host, for example
-`https://n8n.example.com/mcp-server/http`.
+Find it in n8n under **Settings > Instance-level MCP > Connection details**. Turn
+MCP access on there first if it is off. Self-hosted instances use the same
+`/mcp-server/http` path on their own host.
 
-Find the URL in n8n under **Settings > Instance-level MCP > Connection details**.
-Turn MCP access on there first if it is off.
+The URL goes in the file rather than an environment variable on purpose.
+Environment variable references in a power's `mcp.json` are not reliably expanded
+([kirodotdev/Kiro#11258](https://github.com/kirodotdev/Kiro/issues/11258)).
 
-If you cannot set an environment variable, replace `${N8N_MCP_URL}` in `mcp.json`
-with the URL.
+The URL is not a secret. It is the public address of the instance, and access is
+controlled by OAuth.
 
 **Then connect.** Kiro opens a browser window. Approve the scopes on the n8n
 consent screen. Nothing else is needed.
