@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "type": "http",
+      "url": "${N8N_MCP_URL}",
+      "disabled": false,
+      "disabledTools": [
+        "install_community_node"
+      ]
+    }
+  }
+}
