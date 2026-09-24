@@ -60,5 +60,6 @@ credential" is not a diagnosis when you can read the error.
   Agent called as a tool.
 - Execution data is retained according to the instance settings. If the run you
   want is gone, say so rather than reasoning about a run you cannot see.
-- Without `execution:read`, none of this is available. Say which scope is missing
-  instead of guessing at the cause.
+- If the execution tools are not available to you, they were not granted. Say
+  that, and that reconnecting lets the user grant them, instead of guessing at
+  the cause from the workflow definition.

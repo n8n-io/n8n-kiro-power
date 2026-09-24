@@ -2,19 +2,8 @@
   "mcpServers": {
     "n8n": {
       "type": "http",
-      "url": "https://YOUR-INSTANCE.app.n8n.cloud/mcp-server/http",
-      "disabled": false,
-      "disabledTools": [
-        "install_community_node"
-      ]
-    },
-    "n8n-local": {
-      "type": "http",
-      "url": "http://localhost:5678/mcp-server/http",
-      "disabled": true,
-      "disabledTools": [
-        "install_community_node"
-      ]
+      "url": "https://YOUR-N8N-HOST/mcp-server/http",
+      "disabled": false
     }
   }
 }

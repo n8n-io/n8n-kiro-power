@@ -72,8 +72,9 @@ publishing to a live instance is less so.
 - If no credential fits, say which one the user has to create and where. You
   cannot create one for them.
 
-## Scope limits
+## When a tool is missing
 
-If a tool you need is not available, the user did not grant the scope. Say which
-scope covers it and let them decide. Do not route around it with a different tool,
-and do not ask them to grant everything.
+A tool that is absent was not granted on the consent screen. Name the tool you
+need and what you wanted it for, and say that reconnecting lets them grant it.
+Do not name a scope you are guessing at, do not route around the gap with a
+different tool, and do not ask them to grant everything.

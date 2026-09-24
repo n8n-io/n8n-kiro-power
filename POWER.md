@@ -96,48 +96,29 @@ enabled. A tool that is absent was not granted, or the feature is off.
 
 ## Configuration
 
-This power ships two server entries. Use the one that matches your instance.
-
-### Self-hosted on the default port
-
-Nothing to edit. Enable the `n8n-local` server, which points at
-`http://localhost:5678/mcp-server/http`.
-
-### Cloud, or a self-hosted instance on another host
-
-Edit the `n8n` server in `mcp.json` and replace the placeholder with your URL:
+**Set your instance URL.** Edit `mcp.json` and replace the placeholder host:
 
 ```json
-"url": "https://your-instance.app.n8n.cloud/mcp-server/http"
+"url": "https://YOUR-N8N-HOST/mcp-server/http"
 ```
 
-Find it in n8n under **Settings > Instance-level MCP > Connection details**. Turn
-MCP access on there first if it is off. Self-hosted instances use the same
-`/mcp-server/http` path on their own host.
+The path `/mcp-server/http` is the same on every instance. Only the host in front
+of it changes, and it is different for every user.
+
+Copy the full URL from n8n under
+**Settings > Instance-level MCP > Connection details**. Turn MCP access on there
+first if it is off.
 
 The URL goes in the file rather than an environment variable on purpose.
 Environment variable references in a power's `mcp.json` are not reliably expanded
 ([kirodotdev/Kiro#11258](https://github.com/kirodotdev/Kiro/issues/11258)).
 
-The URL is not a secret. It is the public address of the instance, and access is
+The URL is not a secret. It is the address of the instance, and access is
 controlled by OAuth.
 
-**Then connect.** Kiro opens a browser window. Approve the scopes on the n8n
-consent screen. Nothing else is needed.
-
-**Recommended scopes**
-
-| Scope | Why |
-|---|---|
-| `workflow:read` | Read workflows, and every read-only build support tool |
-| `workflow:write` | Create and update workflows |
-| `workflow:execute` | Test what the agent builds |
-| `execution:read` | Debug a failed run |
-| `credential:read` | Let the agent reuse a credential you already have |
-
-Approve more only if you need them. Do not approve
-`communityPackage:install` unless you want the agent to install packages on the
-instance.
+**Then connect.** Kiro opens a browser window. n8n shows a consent screen where
+you choose what to grant. Pick what you want Kiro to be able to do. Nothing else
+is needed.
 
 ## Tips
 
