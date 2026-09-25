@@ -1,6 +1,7 @@
 ---
 name: connect-n8n
 description: "Check and fix the connection to the n8n MCP server before any n8n tool is used. Run this on the first turn of a conversation that touches n8n. Use when the n8n server shows no tools, when a connection is refused or times out, when authorization fails or a call returns 401, when a tool the user expected is absent, or when the user asks how to set up or configure the n8n power. Triggers: No tools available, failed to connect to n8n, n8n MCP not working, set up n8n, configure n8n instance URL, n8n 401, n8n unauthorized, YOUR-N8N-HOST."
+compatibility: Requires Kiro with Agent Plugins support and n8n 2.34.0 or later with instance-level MCP enabled.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -20,42 +21,44 @@ config looks correct.
 
 Before you use any n8n tool, confirm all three:
 
-1. **The server is listed.** If the `n8n` server does not appear in your
-   available tools, the power is installed but the server did not start.
+1. **The server is listed.** Look for the power's n8n server, including Kiro's
+   namespaced name. If it is absent, check power activation and the connection
+   error before assuming the server failed to start.
 2. **The URL is a real host.** The shipped entry has the placeholder
    `YOUR-N8N-HOST`. If that is still there, it was never configured.
 3. **A tool call succeeds.** Pick the cheapest read-only tool the server actually
-   lists, such as a workflow search with no filter, and call it. Use whatever is
-   listed rather than a name from memory: the grant decides which tools exist,
-   and a tool absent from the list was not granted. If the only tools listed are
-   write tools, that is still a working connection, so say so and stop rather
-   than calling one to prove it.
+   lists, such as a workflow search with a small result limit, and call it. Use
+   the advertised schema rather than a name from memory. If only write tools
+   are listed, report that tool discovery succeeded but no read call was tested.
+   Do not issue a write as a connection probe.
 
-If step 3 succeeds, say so once and continue. Do not repeat the check later in the
-same conversation.
+If step 3 succeeds, say so once and continue. Repeat only if the connection or
+authorization changes or a later call fails.
 
 ## When the URL is not configured
 
-The usual symptom is that the server is listed but reports
-**"(No tools available)"**. That means it did not connect, not that the instance
-is empty.
+One possible symptom is **"(No tools available)"**. Check the configured URL and
+connection error: this message alone does not distinguish a placeholder, a
+network failure, or an authorization problem. It does not mean the instance is
+empty.
 
-Tell the user to replace `YOUR-N8N-HOST` in the power's `mcp.json` with their own
-host, then reconnect.
+Use the `mcp.json` next to `plugin.json` in the local folder selected during
+import. Replace the entire placeholder URL with the user's copied Server URL,
+then import the configured folder again and reconnect. Agent Plugins servers
+are managed internally by Kiro; do not direct the user to the ordinary
+`~/.kiro/settings/mcp.json` to edit this power.
 
 **Do not guess the host and do not try other hosts.** Every instance has a
-different one and there is no default worth attempting. Only the path is fixed:
-the endpoint is always the instance's base URL followed by `/mcp-server/http`.
+different one and there is no default worth attempting. Copy the full URL,
+including any deployment base path. It ends in `/mcp-server/http`.
 
 The full URL is in n8n under
-**Settings > Instance-level MCP > Connection details**.
+**Settings > Instance-level MCP > Connection details > Connect**, on the OAuth
+tab. Use HTTPS except for loopback addresses.
 
-**Do not suggest an environment variable.** Variable references in a power's
-`mcp.json` are not reliably expanded, even when the variable is set and approved
-([kirodotdev/Kiro#11258](https://github.com/kirodotdev/Kiro/issues/11258)). The
-direct edit is the supported path. In particular, adding the variable to
-`~/.zshrc` does nothing for a GUI launch on macOS, because the app inherits from
-launchd rather than reading shell startup files.
+**Do not suggest an environment variable.** The [Agent Plugins specification](https://agent-plugins.org/specification)
+requires a literal URL and forbids environment-variable expansion in that field.
+Never put a password or token in the URL or configuration.
 
 ## When Kiro cannot reach the host
 
@@ -71,25 +74,44 @@ failure. Say it plainly rather than retrying the connection.
 
 Work through these in order and report what you find:
 
-- **MCP access is off on the instance.** Settings > Instance-level MCP has a
-  toggle. This is the most common cause.
+- **MCP access is off on the instance.** Ask an owner or admin to check
+  Settings > Instance-level MCP. The feature can also be disabled on self-hosted
+  instances with `N8N_DISABLED_MODULES=mcp`.
 - **The URL is missing the path.** The base host alone is not the endpoint. It
   must end in `/mcp-server/http`.
 - **Kiro cannot reach the host.** See the section above.
 
 ## When authorization fails
 
-n8n uses OAuth 2.1 with dynamic client registration. Kiro registers itself and
-opens a browser. There is no API key to paste, so an auth failure is not a missing
-token.
+This power uses OAuth with dynamic client registration. Complete the browser
+sign-in instead of asking the user for an API key. Inspect the actual connection
+error before diagnosing a failure.
 
 - **The browser window did not open or was closed.** Ask the user to retry the
   connection.
-- **A tool the user expected is absent.** That is a scope problem, not a bug. The
-  granted scopes decide which tools are listed. Ask the user to reconnect and
-  approve the scope that covers the tool they want.
-- **A call returns 401 after working earlier.** The grant was revoked or expired.
-  Stop calling tools and ask the user to reconnect. Do not retry the failed call.
+- **OAuth rejects the callback URL.** An admin may have restricted allowed
+  callback URLs. Compare the reported callback with the instance's allowlist;
+  do not disable that restriction as a workaround.
+- **A call returns 401 after working earlier.** The token may have expired or
+  access may have been revoked. Stop and reconnect before another tool call.
+
+## When a tool or workflow is unavailable
+
+Name the missing tool or workflow and what you need it for. Check these causes:
+
+1. **Version.** These skills target n8n 2.34.0 or later. Earlier releases use
+   different names for execution and other tools. Recommend a current stable
+   version; do not invent calls to an unavailable tool.
+2. **Features and license.** Builder tools can be disabled with
+   `N8N_MCP_BUILDER_ENABLED=false`. Folder tools require the folders feature.
+   Disabled workflow tags remove the tag tool. Reconnecting cannot enable these.
+3. **OAuth grant.** If the tool exists on this instance but was not granted,
+   reconnect to request the needed permission. Do not ask for all permissions.
+4. **Workflow exposure and user access.** Search can return a preview even when
+   **Available in MCP** is off. Inspection, testing, and editing also require
+   workflow exposure and the user's own n8n permissions. Follow the returned
+   error to distinguish these conditions; a new OAuth grant cannot grant a
+   project role the user does not have.
 
 ## What not to do
 

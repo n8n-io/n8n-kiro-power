@@ -1,12 +1,16 @@
 ---
 name: build-workflow
 description: "Build an n8n workflow using the code open in the workspace, then validate and test it before calling it done. Use when the user asks to create, build, or change an n8n workflow, to automate a task, to add a scheduled job or a webhook, or to connect n8n to the application in this repository. Triggers: build an n8n workflow, automate this, add a webhook, schedule this, wire n8n to my API, create a workflow."
+compatibility: Requires Kiro with Agent Plugins support and n8n 2.34.0 or later with workflow builder tools enabled.
 metadata:
   author: n8n
   version: "1.0.0"
 ---
 
 # Building n8n workflows from Kiro
+
+Apply the [connect-n8n pre-flight](../connect-n8n/SKILL.md) before the first n8n
+tool call in a conversation. Use the tools and schemas the server actually lists.
 
 The n8n MCP server sends its own build instructions when it connects. Those cover
 the tool sequence: read the SDK reference, get best practices, discover nodes, get
@@ -45,51 +49,70 @@ tunnel, a deployed environment, or a self-hosted n8n on the same network.
 
 **The application calls n8n.** The workflow needs a Webhook trigger. Build the
 workflow first, read the production webhook URL off it, then write the calling
-code in the repo with that URL. Do not invent the URL.
+code in the repo with that URL. Do not invent the URL. The production endpoint
+requires publication; a saved draft or a pinned test does not make it live.
 
-**Both.** Build the n8n side first and test it, then write the application side
-against a working endpoint.
+**Both.** Build and validate the n8n side first. Then write the application side
+against the returned URL and contract. Keep the real round trip marked unverified
+until you have tested the reachable endpoint with the user's authorization.
 
 ## Test before you claim it works
 
 The build loop has a verification step and it is not optional.
 
 - Validate before you save. A validation error is cheaper than a failed run.
-- Test after you save, and **read the result**. A saved workflow is not a working
-  workflow.
+- Test after you save, and **read the result**. Report whether the test used
+  simulated external outputs or real integrations.
 - Report what the test actually returned. If it failed, say so and fix it. Do not
   describe an untested workflow as done.
 
-Pin data lets a workflow run when its trigger cannot fire. Generate it with the
-pin-data tool the server lists, then pass it to the test.
+Use the pin-data preparation tool the server lists. It returns output schemas;
+generate sample items that match them and pass those items to `test_workflow`.
+Inspect the actual pin-data map before running: a node omitted from that map is
+not made safe merely by the tool's name.
+
+A successful pinned test verifies only the nodes that executed against those
+samples. It cannot prove an API URL, credential, external request, or webhook
+round trip works when that part was simulated. State which nodes were pinned
+and what still needs a real check. Do not publish just to obtain a green test.
 
 ### A test run is not a dry run
 
-Testing pins triggers, credentialed nodes, and HTTP Request nodes, so those are
-simulated. **Everything else executes for real**, including credential-free nodes
-that touch the outside world: Execute Command, file reads and writes, and Code
-nodes that do their own I/O.
+The pin-data preparation tool identifies triggers, credentialed nodes, and HTTP
+Request nodes for simulation. **Unpinned nodes execute for real**, including
+Execute Command, file reads and writes, and Code nodes that do their own I/O.
 
-So before the first test run, look at what the workflow will actually do.
+Before testing, inspect the unpinned nodes and their effects. Check again after
+an edit that changes those effects or after changing the pin data.
 
 - If every unpinned node is pure data shaping (Set, If, Merge, plain Code), test
   without asking.
-- If any unpinned node writes a file, runs a command, sends a message, or changes
-  state anywhere, **say what will happen and get confirmation first.** Name the
-  node and the effect. "This will run `Execute Command` against your machine, and
-  the Slack node will post to #general. Test it?"
+- If an unpinned node does I/O or changes state, name the node, target, and effect.
+  Obtain authorization for that effect before the call unless the user has
+  already authorized it. For example: "The unpinned Execute Command node will
+  write a file on the n8n execution host. May I run that test?" A pinned Slack
+  node does not send a message.
 - If the user declines, validate and stop there. Tell them the workflow is
   unverified and why, rather than quietly calling it done.
 
 Pinning the side-effecting node is often the better answer. Offer it.
 
+For a real integration check, use `execute_workflow` only when its effects are
+authorized. Specify the intended execution mode, trigger, and inputs using the
+advertised schema. Follow the returned execution ID with `get_workflow_execution`
+and request `includeData: true` when node results are needed. A started execution
+is not a completed test. Report success only after reading its final result.
+
 ## Publishing
 
 Creating a workflow does not activate it. `publish_workflow` does.
 
-Ask before you publish. A published workflow with a schedule or a webhook starts
-doing real work, possibly against production systems. Building is reversible;
-publishing to a live instance is less so.
+Publish only when the user has authorized publication of this workflow. A
+published workflow with a schedule or webhook can start real work. For an
+existing workflow, distinguish the edited draft from its published version;
+report when a fix is still a draft. Changes to workflow-level settings on an
+already published workflow can reactivate it, so check and authorize their live
+effects before applying them too.
 
 ## Credentials
 
@@ -101,7 +124,6 @@ publishing to a live instance is less so.
 
 ## When a tool is missing
 
-A tool that is absent was not granted on the consent screen. Name the tool you
-need and what you wanted it for, and say that reconnecting lets them grant it.
-Do not name a scope you are guessing at, do not route around the gap with a
-different tool, and do not ask them to grant everything.
+Follow [connect-n8n](../connect-n8n/SKILL.md) to check the version, enabled features,
+license, OAuth grant, and workflow access. Name the missing tool and its purpose.
+Do not guess scope names, bypass an access restriction, or ask for all permissions.

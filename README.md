@@ -1,115 +1,142 @@
 # n8n power for Kiro
 
-Build, run, and debug [n8n](https://n8n.io) workflows in your own n8n instance,
-from Kiro, wired to the code in your workspace.
-
-This power connects Kiro to the MCP server built in to every n8n instance. The
-agent can create workflows, test them, read execution history to debug a failure,
-and inspect what is already on the instance.
+Build, run, and debug [n8n](https://n8n.io) workflows from Kiro using the code in
+your workspace. This power connects to the MCP server built into your n8n Cloud
+or self-hosted instance with OAuth.
 
 ## What it does
 
-- **Build workflows** with the n8n Workflow SDK, including node discovery, type
-  definitions, and validation before saving
-- **Run and test**, so a build is verified and not only written
-- **Debug**: search execution history, open a failed run, find the node that
-  failed
-- **Inspect the instance**: workflows, projects, folders, tags, credentials, and
-  data tables
-- **Build Agents**: create and call first-class n8n Agents, when the instance has
-  them enabled
-- **Version control**: read workflow history, compare versions, restore one
+- **Build workflows** with the n8n Workflow SDK, node discovery, and validation.
+- **Test workflow logic** with simulated external inputs and report what remains
+  unverified. Run real integrations when you authorize their effects.
+- **Debug failures** from execution data and workflow version history.
+- **Inspect available resources** such as workflows, credentials, projects,
+  folders, tags, and data tables. Availability depends on your instance and access.
 
-The reason to run this in an editor rather than a chat client is the workspace.
-The agent reads your code, so it can wire a webhook to the endpoint you are
-actually writing, and match a request body to the type in your repo.
+Kiro can read the route definitions and types in your repository. It can use
+those to match a workflow's requests to the application you are developing.
+Workflows remain normal n8n workflows that you can edit and run without Kiro.
+
+The skills cover workflows, including workflows with AI Agent nodes. Standalone
+n8n Agents are a separate [Preview feature](https://docs.n8n.io/connect/connect-to-n8n-mcp-server#exposing-agents-to-mcp-clients)
+and are outside this power's release scope.
 
 ## Requirements
 
-- An n8n instance that Kiro can reach
-- MCP access turned on in that instance, under
-  **Settings > Instance-level MCP**
-- Kiro
+- **n8n 2.34.0 or later**, using a current stable patch release. This is the
+  compatibility floor for the tool names used by these skills. Earlier versions
+  use different execution tool names. See the [MCP tool reference](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference).
+- Kiro IDE with Agent Plugins support and network access to your instance.
+- An instance owner or admin must enable **Settings > Instance-level MCP**.
+- To inspect, run, or change an existing workflow, enable **Available in MCP**
+  for that workflow and ensure your n8n user has the necessary permissions.
+  Workflow search can show previews of workflows that have not been exposed.
+- Workflow builder tools must be enabled. On self-hosted instances, an admin can
+  disable them with `N8N_MCP_BUILDER_ENABLED=false`.
+
+The [release checklist](docs/release-checklist.md) records validation status and
+the exact versions used for live testing. A compatibility floor is not a claim
+that every version has been tested.
 
 ## Install
 
-**1. Install the power.** In Kiro, open the Powers panel, choose
-**Import power from GitHub**, and enter:
+Use a local folder so you can set your instance URL before Kiro imports the
+power. The URL is different for each user.
 
-```
-https://github.com/n8n-io/n8n-kiro-power
+**1. Get the power.** Clone this repository or download and extract it:
+
+```sh
+git clone https://github.com/n8n-io/n8n-kiro-power.git
 ```
 
-**2. Point it at your instance.** Edit `mcp.json` and replace the placeholder
-host:
+For an unmerged PR, check out its branch before you continue.
+
+**2. Copy your MCP URL.** In n8n, open **Settings > Instance-level MCP >
+Connection details > Connect**. Choose OAuth and copy the full **Server URL**.
+It ends in `/mcp-server/http`. See the [n8n connection guide](https://docs.n8n.io/connect/connect-to-n8n-mcp-server).
+
+**3. Configure the folder.** Open `mcp.json` at the root of the downloaded
+`n8n-kiro-power` folder, next to `plugin.json`. Replace the entire placeholder URL
+with the copied value:
 
 ```json
-"url": "https://YOUR-N8N-HOST/mcp-server/http"
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "n8n": {
+      "type": "streamable-http",
+      "url": "https://YOUR-N8N-HOST/mcp-server/http"
+    }
+  }
+}
 ```
 
-`/mcp-server/http` is the same on every instance. Only the host changes, and it
-is different for every user, so there is no default that could work here.
+Use HTTPS except for a loopback address such as `http://localhost:5678`.
+Do not put tokens or passwords in this file. Agent Plugins requires a literal
+URL and does not expand environment variables in this field.
 
-Copy the full URL from n8n under **Settings > Instance-level MCP > Connection
-details**.
+**4. Import the configured folder.** In Kiro, open **Powers > Add Custom Power >
+Import power from a folder** and select the folder containing `plugin.json`.
+This follows Kiro's [local installation procedure](https://kiro.dev/docs/powers/installation/).
+Agent Plugins MCP servers are managed internally by Kiro; they do not appear in
+the user-level `~/.kiro/settings/mcp.json`.
 
-The URL goes in the file rather than an environment variable because variable
-references in a power's `mcp.json` are not reliably expanded
-([kirodotdev/Kiro#11258](https://github.com/kirodotdev/Kiro/issues/11258)). The
-URL is not a secret: it is the address of your instance, and access is controlled
-by OAuth.
+**5. Connect and authorize.** Ask Kiro to connect to n8n. Complete the OAuth
+browser sign-in and review the requested permissions. Then ask it to list the
+workflows it can access. A successful read confirms the connection. If the
+browser does not open, inspect the MCP connection error and retry authorization.
+This power uses OAuth; it does not require an API key or token to be pasted.
 
-**3. Approve access.** Kiro opens a browser window. n8n shows a consent screen
-listing what Kiro is asking for. Grant what you want.
+If you change your instance URL, edit the same local folder and import it again.
+After an update or reinstall, confirm that Kiro is using your intended host.
 
-There is no API key and no token to paste. n8n uses OAuth 2.1 with dynamic client
-registration, so Kiro registers itself.
+A Kiro cloud session runs remotely. It cannot reach an instance that is only
+available on your local network; `localhost` would refer to that remote machine.
 
-Kiro has to be able to reach the host you set. A Kiro **cloud session** runs on a
-remote machine, so an instance that only resolves on your own network is not
-reachable from one.
+## Access and troubleshooting
 
-## What the agent can do
+Your OAuth grant limits the tools Kiro can use. Your n8n version, enabled
+features, license, user permissions, and each workflow's MCP setting also limit
+what is available. A missing tool does not always mean you withheld a permission.
 
-You decide that on the consent screen. Which tools appear follows from what you
-granted, so a tool that is missing was simply not granted.
+- **No tools:** check the configured URL, MCP status, network reachability, and
+  OAuth connection error. Do not assume the instance has no workflows.
+- **A tool is missing:** check the version and feature availability before
+  reconnecting to change permissions. Folder tools require the folders feature;
+  disabled workflow tags also remove the tag tool.
+- **A workflow appears in search but cannot be opened:** check its **Available
+  in MCP** setting and your n8n user's access.
+- **A previously working call returns 401:** stop and reconnect. The token may
+  have expired or access may have been revoked.
 
-You can change the grant at any time by reconnecting, or revoke it in n8n under
-**Settings > Instance-level MCP**.
-
-**Point this at a development instance first.** If you grant write and execute,
-the agent can create, update, run, and publish workflows. A published workflow
-with a schedule or a webhook starts real work against real systems.
+You can review or revoke OAuth access under **Settings > Instance-level MCP >
+Connected clients**. Start with a development instance. Real executions and
+publishing can affect external systems. Creating or editing a draft does not
+prove that the published workflow has changed.
 
 ## Skills
 
 | Skill | Loads when |
 |---|---|
-| `connect-n8n` | First use, or when the connection or authorization fails |
+| `connect-n8n` | First use, or when connection or access fails |
 | `build-workflow` | Creating or changing a workflow |
 | `debug-execution` | A workflow failed or started behaving differently |
 
-The skills deliberately do not restate the MCP server's own build instructions.
-The server sends those when it connects, so a copy here would drift. The skills
-cover what the server cannot know: whether the connection is real, what is in
-your workspace, and how to triage a failed run.
+The server supplies the SDK and build instructions. These skills add workspace
+context, connection checks, test interpretation, and a debugging process.
 
 ## Privacy
 
 Your workflow data goes between your n8n instance and Kiro. This power adds no
-service in between: it is configuration and instructions only, and it stores
-nothing.
+intermediate service: it contains configuration and instructions only.
 
 - [n8n privacy policy](https://n8n.io/legal/privacy/)
-- Kiro's handling of MCP traffic is covered by AWS's terms for Kiro.
+- [Kiro data protection](https://kiro.dev/docs/privacy-and-security/data-protection/)
 
 ## Support
 
-Open an issue on this repository:
-[github.com/n8n-io/n8n-kiro-power/issues](https://github.com/n8n-io/n8n-kiro-power/issues)
-
-For questions about n8n itself rather than this power, the
-[n8n community forum](https://community.n8n.io) is the better place.
+For this power, [open an issue](https://github.com/n8n-io/n8n-kiro-power/issues).
+For n8n product questions, use the [n8n community forum](https://community.n8n.io).
 
 ## Licence
 

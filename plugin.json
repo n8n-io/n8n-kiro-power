@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "n8n",
   "version": "1.0.0",
-  "description": "Build, run, and debug n8n workflows in your own n8n instance, wired to the code in your workspace. Connects to the MCP server built in to every instance over OAuth, with no API key to paste.",
+  "description": "Build, run, and debug workflows in your n8n instance using the code in your workspace. Connect through n8n's built-in MCP server with OAuth. Requires n8n 2.34.0 or later and enabled MCP access.",
   "author": {
     "name": "n8n",
     "url": "https://n8n.io"
@@ -15,8 +15,7 @@
     "integration",
     "webhook",
     "scheduled job",
-    "build a workflow",
-    "ai agent"
+    "build a workflow"
   ],
   "license": "Apache-2.0",
   "homepage": "https://docs.n8n.io",
