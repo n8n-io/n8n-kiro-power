@@ -1,0 +1,26 @@
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_dfcba7eeedfd04 106-110
+  s_99430064d5fc8e::t_2e06a39afd91bd 28-32,49-58,99-103,105
+README.md
+  s_99430064d5fc8e::t_2e06a39afd91bd 84-96,102-107,110-112
+  s_99430064d5fc8e::t_dfcba7eeedfd04 97-101
+docs/release-checklist.md
+  s_99430064d5fc8e::t_2e06a39afd91bd 13-14,24-45,50-56
+  s_99430064d5fc8e::t_dfcba7eeedfd04 46-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "737eb15ff3a5cabef0ca789ef6a2334d8d247960",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
