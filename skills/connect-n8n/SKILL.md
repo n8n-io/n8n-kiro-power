@@ -25,7 +25,11 @@ Before you use any n8n tool, confirm all three:
    namespaced name. If it is absent, check power activation and the connection
    error before assuming the server failed to start.
 2. **The URL is a real host.** The shipped entry has the placeholder
-   `YOUR-N8N-HOST`. If that is still there, it was never configured.
+   `YOUR-N8N-HOST`. If that is still there, it was never configured. Inspect the
+   installed power's configuration when available. In Kiro 1.1.70, **Powers >
+   n8n > Open powers config** opens that file. Do not tell the user to replace
+   the placeholder unless you observed it. If you cannot inspect the URL or
+   connection error, say which evidence is missing.
 3. **A tool call succeeds.** Pick the cheapest read-only tool the server actually
    lists, such as a workflow search with a small result limit, and call it. Use
    the advertised schema rather than a name from memory. If only write tools
@@ -42,11 +46,16 @@ connection error: this message alone does not distinguish a placeholder, a
 network failure, or an authorization problem. It does not mean the instance is
 empty.
 
-Use the `mcp.json` next to `plugin.json` in the local folder selected during
-import. Replace the entire placeholder URL with the user's copied Server URL,
-then import the configured folder again and reconnect. Agent Plugins servers
-are managed internally by Kiro; do not direct the user to the ordinary
-`~/.kiro/settings/mcp.json` to edit this power.
+Open **Powers > n8n > Open powers config** and replace the entire placeholder
+URL in the installed `mcp.json` with the user's copied Server URL. Save and
+reconnect the power's server under **Kiro > MCP Servers**. If that control is
+unavailable, edit the `mcp.json` next to `plugin.json` in the local import folder
+and import that folder again. Import creates a separate installed copy, so
+editing the source folder alone does not update it. After an update or
+reinstall, check the installed URL again.
+
+Agent Plugins servers are managed internally by Kiro; do not direct the user
+to the ordinary `~/.kiro/settings/mcp.json` to edit this power.
 
 **Do not guess the host and do not try other hosts.** Every instance has a
 different one and there is no default worth attempting. Copy the full URL,
@@ -87,8 +96,18 @@ This power uses OAuth with dynamic client registration. Complete the browser
 sign-in instead of asking the user for an API key. Inspect the actual connection
 error before diagnosing a failure.
 
+- **The server shows Unauthenticated or the initial connection reports
+  Unauthorized.** In the **Kiro** sidebar, expand **MCP Servers** and select
+  **Authenticate** on the power's namespaced n8n server. In Kiro 1.1.70, power
+  activation alone did not open OAuth; this control did. Let the user review
+  the requested permissions on the n8n authorization page.
 - **The browser window did not open or was closed.** Ask the user to retry the
-  connection.
+  **Authenticate** action and check for Kiro's external-website prompt.
+- **The browser says the request expired or was already completed.** Check
+  whether Kiro timed out. In the 1.1.70 live test, the connection timeout was
+  60 seconds. Close the stale page and use **Retry**, then **Authenticate**
+  when the user is ready. Complete the newly opened flow; do not reuse an old
+  authorization URL or weaken callback validation.
 - **OAuth rejects the callback URL.** An admin may have restricted allowed
   callback URLs. Compare the reported callback with the instance's allowlist;
   do not disable that restriction as a workaround.

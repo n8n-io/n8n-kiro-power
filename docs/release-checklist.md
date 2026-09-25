@@ -10,7 +10,8 @@ Standalone n8n Agents are in Preview and are outside the release scope.
 |---|---|
 | Agent Plugins manifest and MCP schemas | Passed locally on 2026-09-25 with check-jsonschema 0.38.0 |
 | Skill frontmatter, local links, README JSON example, and workflow schema | Passed locally on 2026-09-25 |
-| Current-format Kiro activation and OAuth | Not run |
+| Current-format folder import and skill activation | Passed in Kiro 1.1.70 on 2026-09-25; see the live run below |
+| OAuth and a successful MCP read | Browser flow started; awaiting user authorization; read not run |
 | Build, simulated test, and real integration | Not run |
 | Debug and authorization failure cases | Not run |
 | Update or reinstall preserves the intended connection | Not run |
@@ -19,6 +20,40 @@ Earlier testing of the legacy `POWER.md` package does not validate this
 `plugin.json` package. Passing schema checks does not prove a working connection.
 These local checks cover the package in this PR; repeat them after file changes
 and use the CI result for the exact commit being released.
+
+### Live run: 2026-09-25
+
+- **Package:** `cef47855b442d5d24a8e0768db9e814c007d026c`, copied to a temporary
+  folder with only the instance URL changed. The repository keeps its placeholder.
+- **Client:** Kiro IDE 1.1.70, macOS 27.0, Apple Silicon; local IDE session.
+- **Target:** existing n8n Cloud instance; n8n version not yet verified.
+- **Tester:** automated UI checks in the maintainer's desktop session; OAuth
+  sign-in and consent handed to the maintainer.
+- **Import:** **Add Custom Power > Import power from a folder** succeeded.
+  The detail page showed all three skills and the manifest description.
+- **Configuration:** **Open powers config** opened the installed `mcp.json`,
+  whose URL matched the configured source copy. Installation copies the folder;
+  it does not edit the source package or the ordinary user MCP configuration.
+- **Activation:** a read-only smoke-test prompt activated the power and loaded
+  `connect-n8n`. The MCP server was named `power-n8n-power-n8n` because the import
+  folder was named `n8n-power`. The initial connection returned `Unauthorized`
+  and exposed no tools. The agent did not fall back to REST or an API key.
+- **Authorization:** **Kiro > MCP Servers > Authenticate** started OAuth dynamic
+  client registration and Kiro's external-website prompt. The requested scopes
+  included workflow read/write/execute, execution and credential reads, project
+  and data-table reads/writes, and tag reads. This is an authorization request,
+  not evidence of a completed grant or working tools.
+- **Timeout recovery:** the first attempt timed out after 60 seconds; the user
+  saw an expired/already-completed authorization request. **Retry** returned the
+  server to **Unauthenticated** and **Authenticate** started a fresh browser
+  request. Successful completion of that retry is not yet verified.
+- **Remaining:** consent, a successful read, version discovery, workflow tests,
+  failure cases, authenticated reconnect, update behavior, and GitHub import.
+  No workflow or execution was created during these checks.
+
+The smoke test exposed two onboarding gaps now addressed in the instructions:
+activation may require a separate **Authenticate** action, and missing tools
+must not cause the agent to assume the configured URL is still a placeholder.
 
 ## Package checks
 

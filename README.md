@@ -81,14 +81,35 @@ This follows Kiro's [local installation procedure](https://kiro.dev/docs/powers/
 Agent Plugins MCP servers are managed internally by Kiro; they do not appear in
 the user-level `~/.kiro/settings/mcp.json`.
 
-**5. Connect and authorize.** Ask Kiro to connect to n8n. Complete the OAuth
-browser sign-in and review the requested permissions. Then ask it to list the
-workflows it can access. A successful read confirms the connection. If the
-browser does not open, inspect the MCP connection error and retry authorization.
-This power uses OAuth; it does not require an API key or token to be pasted.
+**5. Connect and authorize.** Ask Kiro to connect to n8n to activate the power.
+In the **Kiro** sidebar, expand **MCP Servers**. If the power's n8n server shows
+**Unauthenticated**, choose **Authenticate**. Allow Kiro to open your n8n
+authorization page, complete the browser sign-in, and review the requested
+permissions. Then ask Kiro to search for a workflow. A successful read confirms
+the connection. This power uses OAuth; it does not require an API key or token
+to be pasted.
+
+In Kiro 1.1.70, activation alone reported **No tools available** and logged
+**Unauthorized** until **Authenticate** was selected. That control started the
+OAuth browser flow. Do not treat either message as evidence that your instance
+has no workflows.
+
+If the browser says the authorization request expired or was already completed,
+close that page and retry from Kiro. In this test Kiro stopped waiting after
+60 seconds. Select **Retry** if the connection failed, then **Authenticate**
+when you are ready to complete the browser flow. Use the newly opened page.
+
+For an already installed power, including one imported from GitHub, open
+**Powers > n8n > Open powers config** to open its installed `mcp.json`. Set your
+Server URL there and save, then reconnect through **MCP Servers**. This avoids
+guessing Kiro's internal installation directory. The button and file location
+were verified in Kiro 1.1.70; authenticated reconnection and GitHub installation
+remain on the [release checklist](docs/release-checklist.md).
 
 If you change your instance URL, edit the same local folder and import it again.
-After an update or reinstall, confirm that Kiro is using your intended host.
+The imported package is a separate copy. After an update or reinstall, open
+**Open powers config** and confirm that it still contains your intended host;
+do not assume edits to the installed copy survive an update.
 
 A Kiro cloud session runs remotely. It cannot reach an instance that is only
 available on your local network; `localhost` would refer to that remote machine.
