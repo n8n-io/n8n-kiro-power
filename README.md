@@ -4,6 +4,12 @@ Build, run, and debug [n8n](https://n8n.io) workflows from Kiro using the code i
 your workspace. This power connects to the MCP server built into your n8n Cloud
 or self-hosted instance with OAuth.
 
+**Release status:** live testing with Kiro 1.1.70 reached browser authorization,
+but the MCP token exchange failed. The tested instance advertises an OAuth
+client-authentication method its token endpoint rejects. See the
+[compatibility blocker and reproduction](docs/oauth-compatibility.md).
+End-to-end workflow operation is not yet verified.
+
 ## What it does
 
 - **Build workflows** with the n8n Workflow SDK, node discovery, and validation.

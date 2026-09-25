@@ -113,6 +113,14 @@ error before diagnosing a failure.
   do not disable that restriction as a workaround.
 - **A call returns 401 after working earlier.** The token may have expired or
   access may have been revoked. Stop and reconnect before another tool call.
+- **The browser reports success but Kiro reports a missing `client_id`.**
+  Browser callback success does not prove a successful token exchange. A live
+  Kiro 1.1.70 test found an instance advertising `client_secret_basic` whose
+  token endpoint required `client_id` in the body instead. Record the client
+  and n8n versions and the exact error; do not call this a missing user consent
+  or keep asking the user to authorize. See the
+  [compatibility report](../../docs/oauth-compatibility.md). Do not inject
+  credentials, change authentication methods, or bypass OAuth to hide the error.
 
 ## When a tool or workflow is unavailable
 

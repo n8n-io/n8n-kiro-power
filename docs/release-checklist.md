@@ -11,10 +11,10 @@ Standalone n8n Agents are in Preview and are outside the release scope.
 | Agent Plugins manifest and MCP schemas | Passed locally on 2026-09-25 with check-jsonschema 0.38.0 |
 | Skill frontmatter, local links, README JSON example, and workflow schema | Passed locally on 2026-09-25 |
 | Current-format folder import and skill activation | Passed in Kiro 1.1.70 on 2026-09-25; see the live run below |
-| OAuth and a successful MCP read | Browser flow started; awaiting user authorization; read not run |
+| OAuth and a successful MCP read | Browser authorization completed, then token exchange failed with missing `client_id`; read not run; see [blocker](oauth-compatibility.md) |
 | Build, simulated test, and real integration | Not run |
 | Debug and authorization failure cases | Not run |
-| Update or reinstall preserves the intended connection | Not run |
+| Local update installs changed skills and intended URL | Passed through Check for updates > Install updates; authenticated reconnect and reinstall not verified |
 
 Earlier testing of the legacy `POWER.md` package does not validate this
 `plugin.json` package. Passing schema checks does not prove a working connection.
@@ -26,7 +26,7 @@ and use the CI result for the exact commit being released.
 - **Package:** `cef47855b442d5d24a8e0768db9e814c007d026c`, copied to a temporary
   folder with only the instance URL changed. The repository keeps its placeholder.
 - **Client:** Kiro IDE 1.1.70, macOS 27.0, Apple Silicon; local IDE session.
-- **Target:** existing n8n Cloud instance; n8n version not yet verified.
+- **Target:** existing n8n Cloud instance, version 2.39.6 reported by the user.
 - **Tester:** automated UI checks in the maintainer's desktop session; OAuth
   sign-in and consent handed to the maintainer.
 - **Import:** **Add Custom Power > Import power from a folder** succeeded.
@@ -41,15 +41,27 @@ and use the CI result for the exact commit being released.
 - **Authorization:** **Kiro > MCP Servers > Authenticate** started OAuth dynamic
   client registration and Kiro's external-website prompt. The requested scopes
   included workflow read/write/execute, execution and credential reads, project
-  and data-table reads/writes, and tag reads. This is an authorization request,
-  not evidence of a completed grant or working tools.
+  and data-table reads/writes, and tag reads. The user subsequently completed
+  browser authorization and supplied the success page. Kiro then failed with
+  `Invalid input: expected string, received undefined` at `client_id`.
 - **Timeout recovery:** the first attempt timed out after 60 seconds; the user
   saw an expired/already-completed authorization request. **Retry** returned the
   server to **Unauthenticated** and **Authenticate** started a fresh browser
-  request. Successful completion of that retry is not yet verified.
-- **Remaining:** consent, a successful read, version discovery, workflow tests,
-  failure cases, authenticated reconnect, update behavior, and GitHub import.
+  request. Two attempts timed out. A later attempt completed the browser step
+  within the timeout and exposed the separate token-exchange failure above.
+- **Compatibility diagnosis:** synthetic invalid-client probes reproduced the
+  same `client_id` error for HTTP Basic authentication. Body-based client
+  authentication reached client lookup. See the [evidence and reproduction](oauth-compatibility.md).
+  Retrying Kiro after browser success returned to **Unauthenticated**.
+- **Remaining:** a successful token exchange and read, workflow tests,
+  failure cases, authenticated reconnect, preservation of edits made only to
+  the installed configuration, and GitHub import.
   No workflow or execution was created during these checks.
+- **Local update:** after changing the source folder's connection skill and
+  adding the compatibility report, **Check for updates > Install updates**
+  succeeded. The installed files matched the source and the installed MCP URL
+  still matched the configured source URL. This does not establish whether
+  edits made only to the installed configuration survive replacement.
 
 The smoke test exposed two onboarding gaps now addressed in the instructions:
 activation may require a separate **Authenticate** action, and missing tools
@@ -118,6 +130,7 @@ private payloads. Test both hosting models before advertising both as verified.
 
 ## Registry release gates
 
+- [ ] Resolve the OAuth client-authentication mismatch and verify token exchange.
 - [ ] Record successful live results above, including any supported-version limits.
 - [ ] Confirm the registry/GitHub import flow and document how users configure the
       instance URL in that flow. The README currently documents folder import.
