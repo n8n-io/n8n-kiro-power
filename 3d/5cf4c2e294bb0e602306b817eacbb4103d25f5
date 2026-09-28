@@ -1,0 +1,117 @@
+.github/workflows/validate-power.yml
+  s_99430064d5fc8e::t_c97f0f81e7fc2d 31-52
+.gitattributes
+  s_99430064d5fc8e::t_58ba4973478872 1
+test/setup/setup.test.mjs
+  s_99430064d5fc8e::t_9d2a2ef46bd5bb 1-7,9-23,26-121,123-129,131-179,216
+  s_99430064d5fc8e::t_8f64e608d96558 8,180-215
+  s_99430064d5fc8e::t_24eb2918368342 24-25,122,130
+docs/setup-helper.md
+  s_99430064d5fc8e::t_118d6c218dbeac 83-84
+  s_99430064d5fc8e::t_2a6f81ae921bec 1-6,14-77,81-82,87-126
+  s_99430064d5fc8e::t_5dfa026fab74ed 7-13,78-80,85-86
+test/setup/bundle.test.mjs
+  s_99430064d5fc8e::t_9d2a2ef46bd5bb 1-27
+src/setup/setup.mjs
+  s_99430064d5fc8e::t_034aef6d095634 1-25,27-91,93-135
+  s_99430064d5fc8e::t_b04b3c96e63b77 26
+  s_99430064d5fc8e::t_1612c1145a8aca 92
+scripts/build.mjs
+  s_99430064d5fc8e::t_9d2a2ef46bd5bb 8
+  s_99430064d5fc8e::t_034aef6d095634 1-7,9-21
+README.md
+  s_99430064d5fc8e::t_ab345f6b91637f 7-14,16-20,44-46,58-77,80,83-92,94,96-100,105-107,113-117,153-158
+  s_99430064d5fc8e::t_e23ffa9a24ac94 15
+docs/oauth-compatibility.md
+  s_99430064d5fc8e::t_e4f6543bacb247 128-130
+  s_99430064d5fc8e::t_0f4e31484c2a48 1,6-8,94-98,115-123,126,137-138
+  s_99430064d5fc8e::t_18da8242d27736 100-114,127,136
+  s_99430064d5fc8e::t_c04b396755dc16 9-13
+skills/build-workflow/SKILL.md
+  s_99430064d5fc8e::t_8469f51bc7293b 22-26
+  s_99430064d5fc8e::t_4ff72b696ae2f5 29-33
+  s_99430064d5fc8e::t_c97f0f81e7fc2d 14-15,27-28
+  s_99430064d5fc8e::t_209146d77f17a1 120-123
+docs/public-oauth-implementation-plan.md
+  s_99430064d5fc8e::t_5dfa026fab74ed 101-107
+  s_99430064d5fc8e::t_ab345f6b91637f 3-5
+  s_99430064d5fc8e::t_f3b3f08fc85c01 1-2,6-100,108-161,164-307
+  s_99430064d5fc8e::t_109e3550fef71c 162-163
+docs/public-oauth-acceptance.md
+  s_99430064d5fc8e::t_c04b396755dc16 74-76,80-87
+  s_99430064d5fc8e::t_38e50a18dd73a5 27,46-56,65,132-143
+  s_99430064d5fc8e::t_226480196dfafd 1-26,28-45,57-64,66-73,105-115,123-131,144-174,180-184
+  s_99430064d5fc8e::t_520cb76b9633f5 77-78,116-122,175
+  s_99430064d5fc8e::t_ab345f6b91637f 176-179
+  s_99430064d5fc8e::t_1ac2fcfedb2e12 79,88-104
+skills/debug-execution/SKILL.md
+  s_99430064d5fc8e::t_d609383a77eccd 66-67
+  s_99430064d5fc8e::t_c97f0f81e7fc2d 16-17,68-69
+  s_99430064d5fc8e::t_4ff72b696ae2f5 70-72
+src/setup/cli.mjs
+  s_99430064d5fc8e::t_034aef6d095634 1-40
+scripts/check-package.mjs
+  s_99430064d5fc8e::t_c97f0f81e7fc2d 1-30
+test/setup/discovery.test.mjs
+  s_99430064d5fc8e::t_9d2a2ef46bd5bb 1-66
+src/setup/storage.mjs
+  s_99430064d5fc8e::t_034aef6d095634 1-115
+src/setup/kiro.mjs
+  s_99430064d5fc8e::t_011d4a4e660925 1,3-46,50-54
+  s_99430064d5fc8e::t_24eb2918368342 2,47-49
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_3c388bf749c472 3-4,10-98,101-138
+plugin.json
+  s_99430064d5fc8e::t_2a6f81ae921bec 5
+src/setup/discovery.mjs
+  s_99430064d5fc8e::t_1612c1145a8aca 122,134
+  s_99430064d5fc8e::t_011d4a4e660925 1-22,25-121,123-133,135-137
+  s_99430064d5fc8e::t_2a6f81ae921bec 23-24
+package.json
+  s_99430064d5fc8e::t_011d4a4e660925 1-15
+.gitignore
+  s_99430064d5fc8e::t_011d4a4e660925 1-3
+skills/connect-n8n/scripts/THIRD-PARTY-NOTICES.txt
+  s_99430064d5fc8e::t_8e075150452af5 1-24
+docs/token-auth-acceptance.md
+  s_99430064d5fc8e::t_da61af1d8950ef 1-99
+docs/kiro-tool-schema-compatibility.md
+  s_99430064d5fc8e::t_4ff72b696ae2f5 1-38,44-53
+  s_99430064d5fc8e::t_e4f6543bacb247 39-43
+src/setup/errors.mjs
+  s_99430064d5fc8e::t_011d4a4e660925 1-5,8-15
+test/setup/helpers.mjs
+  s_99430064d5fc8e::t_9d2a2ef46bd5bb 1-44
+docs/setup-helper-acceptance.md
+  s_99430064d5fc8e::t_266a26ff7901c6 7-9
+  s_99430064d5fc8e::t_2a1f296e7078a0 3-4,24-26
+  s_99430064d5fc8e::t_e23ffa9a24ac94 1-2,5-6,10-23,27-94
+docs/release-checklist.md
+  s_99430064d5fc8e::t_f448f58ee693db 7-9,15-16,19-21,40-41,148-150,159-160,172-174,200-201,203,205-207,211-212,217
+  s_99430064d5fc8e::t_e23ffa9a24ac94 10-14
+  s_99430064d5fc8e::t_00c6e42ff592dd 213-214
+  s_99430064d5fc8e::t_e4f6543bacb247 49-50,121-142
+  s_99430064d5fc8e::t_2a1f296e7078a0 17-18,22-39
+  s_99430064d5fc8e::t_6f5bdfc587808f 48,51,104-120,143-144
+skills/connect-n8n/scripts/setup.mjs
+  s_99430064d5fc8e::t_de843452735201 57-58
+  s_99430064d5fc8e::t_2277603011aaa6 224-1598,1632-1633,1651
+  s_99430064d5fc8e::t_111d26db79d7bb 15,158,165,211-213,221,1602,1808
+  s_99430064d5fc8e::t_8e075150452af5 1-14,16-56,59-157,159-164,166-210,214-220,222-223,1599-1601,1603-1631,1634-1650,1652-1807,1809-1916
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3d5cf4c2e294bb0e602306b817eacbb4103d25f5",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
