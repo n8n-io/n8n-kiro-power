@@ -1,148 +1,138 @@
 ---
 name: connect-n8n
-description: "Check and fix the connection to the n8n MCP server before any n8n tool is used. Run this on the first turn of a conversation that touches n8n. Use when the n8n server shows no tools, when a connection is refused or times out, when authorization fails or a call returns 401, when a tool the user expected is absent, or when the user asks how to set up or configure the n8n power. Triggers: No tools available, failed to connect to n8n, n8n MCP not working, set up n8n, configure n8n instance URL, n8n 401, n8n unauthorized, YOUR-N8N-HOST."
-compatibility: Requires Kiro with Agent Plugins support and n8n 2.34.0 or later with instance-level MCP enabled.
+description: "Set up and verify the n8n MCP connection before using n8n tools. Run on the first turn touching n8n, or when tools are missing, OAuth fails, a request times out, or the user asks to connect a new instance. Uses a bundled public-client OAuth setup helper and Kiro's native MCP settings."
+compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; the live public-OAuth test used local n8n 2.41.0 development.
 metadata:
   author: n8n
   version: "1.0.0"
 ---
 
-# Connecting to n8n
+# Connect to n8n
 
-Run this check on the first turn of a new conversation in this power, before any
-n8n tool call. Do not skip it because the config file looks populated.
+This is a skills-only power. Its tools come from a native Kiro MCP connection,
+not a bundled power server. Apply this check before the first n8n tool call in a
+conversation and after a connection or authorization failure.
 
-## Pre-flight
+## Verify the intended connection
 
-**A populated `mcp.json` does not prove a working connection.** It proves a file
-was written. The host still has to be filled in and reachable, and the OAuth flow
-still has to have been completed in a browser, so both can be missing while the
-config looks correct.
+1. Identify the user's intended n8n instance and its native MCP server name.
+   Inspect available connections before setting up another. The helper names
+   connections `n8n-<host>-<hash>` unless a custom name was supplied. Existing
+   user-created OAuth or token connections can also be used; do not replace them.
+2. Confirm its configured endpoint, scope and observed Kiro connection status.
+   If several instances are present and the intended one is ambiguous, clarify
+   before any workflow operation. Do not choose production based on list order.
+3. Call the cheapest read-only tool that connection actually advertises, using
+   its schema. A small workflow search is suitable. If no read tool is available,
+   report discovery alone as verified. Never use a write as a connection probe.
 
-Before you use any n8n tool, confirm all three:
+A settings file, browser success page or tool count does not prove a successful
+MCP read. Missing tools do not prove the instance is empty. If the read succeeds,
+continue the task on that same connection; do not repeatedly reconnect.
 
-1. **The server is listed.** Look for the power's n8n server, including Kiro's
-   namespaced name. If it is absent, check power activation and the connection
-   error before assuming the server failed to start.
-2. **The URL is a real host.** The shipped entry has the placeholder
-   `YOUR-N8N-HOST`. If that is still there, it was never configured. Inspect the
-   installed power's configuration when available. In Kiro 1.1.70, **Powers >
-   n8n > Open powers config** opens that file. Do not tell the user to replace
-   the placeholder unless you observed it. If you cannot inspect the URL or
-   connection error, say which evidence is missing.
-3. **A tool call succeeds.** Pick the cheapest read-only tool the server actually
-   lists, such as a workflow search with a small result limit, and call it. Use
-   the advertised schema rather than a name from memory. If only write tools
-   are listed, report that tool discovery succeeded but no read call was tested.
-   Do not issue a write as a connection probe.
+## Set up a connection
 
-If step 3 succeeds, say so once and continue. Repeat only if the connection or
-authorization changes or a later call fails.
+Obtain the instance URL from the user or a verified existing configuration. Do
+not guess a host. Accept either its base URL, including any deployment path, or
+the Server URL from **n8n > Settings > Instance-level MCP > Connection details >
+Connect**. Require HTTPS except on loopback. An owner/admin must enable MCP;
+the helper does not change that setting.
 
-## When the URL is not configured
+Check `node --version`; Node.js 22+ must be available in Kiro's environment.
+If missing, explain that prerequisite. Do not install a runtime automatically.
+The helper detects Kiro's version and currently accepts only IDE 1.1.70. If
+detection fails, inspect Help > About and pass that actual version through
+`--kiro-version`. Never misreport the version to bypass compatibility checks.
 
-One possible symptom is **"(No tools available)"**. Check the configured URL and
-connection error: this message alone does not distinguish a placeholder, a
-network failure, or an authorization problem. It does not mean the instance is
-empty.
+Resolve `scripts/setup.mjs` relative to this skill's actual installed directory.
+Use its absolute path, quoting paths and user inputs correctly for the shell.
+Do not assume `${PLUGIN_ROOT}` is set or that the user's project contains the
+power source. Run the helper; it needs no npm install:
 
-Open **Powers > n8n > Open powers config** and replace the entire placeholder
-URL in the installed `mcp.json` with the user's copied Server URL. Save and
-reconnect the power's server under **Kiro > MCP Servers**. If that control is
-unavailable, edit the `mcp.json` next to `plugin.json` in the local import folder
-and import that folder again. Import creates a separate installed copy, so
-editing the source folder alone does not update it. After an update or
-reinstall, check the installed URL again.
+```sh
+node "/absolute/installed/path/connect-n8n/scripts/setup.mjs" configure --url "https://YOUR-N8N-HOST" --workspace "/absolute/project/path" --json
+```
 
-Agent Plugins servers are managed internally by Kiro; do not direct the user
-to the ordinary `~/.kiro/settings/mcp.json` to edit this power.
+Default setup writes user settings at `~/.kiro/settings/mcp.json`, making the
+connection available across projects. Explain that scope. Add `--scope workspace`
+when the user wants only that project. `--workspace` also checks project overrides
+when using user scope. Agent-specific settings can override either; inspect the
+effective connection in Kiro. Use an explicit `--name` for a requested friendly
+name and preserve it for subsequent commands.
 
-**Do not guess the host and do not try other hosts.** Every instance has a
-different one and there is no default worth attempting. Copy the full URL,
-including any deployment base path. It ends in `/mcp-server/http`.
+On `configured_awaiting_authorization`, tell the user which server was configured
+and direct them to **Kiro > MCP Servers > Authenticate**. Kiro owns browser
+sign-in, consent, PKCE and tokens. Never request passwords, copy authorization
+codes, or implement a login/consent request through REST.
 
-The full URL is in n8n under
-**Settings > Instance-level MCP > Connection details > Connect**, on the OAuth
-tab. Use HTTPS except for loopback addresses.
+Kiro 1.1.70 may request all advertised scopes even with configured scopes. On the
+n8n consent page, choose **Custom** and review workflow read/write/execute plus
+execution read for build/run/debug. Respect a read-only selection; request more
+permissions only for a task that needs them. Do not claim the helper restricts
+the browser request. After consent, repeat the read-only preflight.
 
-**Do not suggest an environment variable.** The [Agent Plugins specification](https://agent-plugins.org/specification)
-requires a literal URL and forbids environment-variable expansion in that field.
-Never put a password or token in the URL or configuration.
+## Diagnose failures
 
-## When Kiro cannot reach the host
+Run `doctor` with the same URL, name, scope and workspace to inspect discovery
+and local configuration. `--dry-run` on configure previews setup without
+registration or file writes. Both make network discovery requests. Neither can
+inspect Kiro's token store or prove an authenticated connection.
 
-Kiro has to reach the host from wherever it is running, and that is not always
-the user's machine. A Kiro cloud session runs remotely, so an instance that only
-resolves on the user's own network is unreachable from it, and `localhost` points
-at the remote machine rather than theirs.
+- **No tools:** inspect the endpoint, connection error and authorization state.
+  Check that Kiro can reach the deployment. Localhost in a remote session refers
+  to that remote machine; this helper targets local IDE sessions.
+- **Network, HTML or 404 response:** check the URL, deployment path, reverse proxy
+  and instance MCP setting. Do not infer the exact cause from status alone or try
+  another host. Cross-origin authorization servers are currently unsupported.
+- **Expired authorization page:** close it, use Retry then Authenticate in Kiro,
+  and complete a fresh flow. The helper sets a five-minute connection timeout.
+  Do not reuse a stale authorization URL.
+- **A previously working call returns 401:** let Kiro refresh or re-authenticate.
+  Verify a read afterward. Do not immediately register a new client.
+- **Invalid client registration:** after confirming the registration was removed,
+  use `repair --new-registration`; this creates a new client and requires fresh
+  Kiro authorization. Review unused grants in n8n; the helper does not revoke them.
+- **Callback failure:** compare the actual callback with instance policy. An
+  occupied port reported by doctor may belong to Kiro. Only for a confirmed
+  collision, use `repair --callback-port <available-port>` and authenticate again.
+  Do not weaken the instance callback policy.
+- **Uncertain registration:** the request may have reached n8n. Consult the instance
+  administrator before explicitly retrying with `repair --new-registration`. Avoid a
+  loop that consumes the instance's registration limit.
+- **Config conflict:** preserve the existing entry and user edits. Use another
+  name or reconcile them with the user. Do not delete state to force adoption.
+- **Browser success followed by missing `client_id`:** inspect whether the active
+  connection is the old bundled server. Public-client setup supplies a client ID
+  with no secret. Do not assume user consent failed or repeatedly restart it.
 
-Check this before you debug anything else, because it looks like a plain network
-failure. Say it plainly rather than retrying the connection.
+## Missing tools or workflows
 
-## When the connection is refused or times out
+Use the actual connection's tools and schemas. Check version, feature/license
+availability, OAuth grant, n8n user/project access, and workflow exposure.
+Workflow skills use names introduced in n8n 2.34.0; that does not establish OAuth
+compatibility for every version. Builder tools can be disabled; folders and tags
+depend on their instance features. Reauthorization cannot enable those features
+or grant a project role. Search previews can include workflows that are not
+Available in MCP; follow the returned access error before inspecting/running.
 
-Work through these in order and report what you find:
+The old bundled-power path omitted nested schemas in Kiro 1.1.70. Native update
+and debug still need acceptance testing. If a required schema is unavailable,
+report that limitation instead of guessing operation fields.
 
-- **MCP access is off on the instance.** Ask an owner or admin to check
-  Settings > Instance-level MCP. The feature can also be disabled on self-hosted
-  instances with `N8N_DISABLED_MODULES=mcp`.
-- **The URL is missing the path.** The base host alone is not the endpoint. It
-  must end in `/mcp-server/http`.
-- **Kiro cannot reach the host.** See the section above.
+## Migration, removal and fallback
 
-## When authorization fails
+For an old bundled server, set up and verify the new native connection before
+disabling the old one through Kiro. Check for duplicates after power updates.
+No root `mcp.json` is shipped now; Open powers config is not the native connection
+setup path. Do not overwrite an existing token connection during migration.
 
-This power uses OAuth with dynamic client registration. Complete the browser
-sign-in instead of asking the user for an API key. Inspect the actual connection
-error before diagnosing a failure.
+`remove` with the same connection arguments removes only an unchanged managed
+entry. It does not revoke OAuth access. Use n8n's Connected clients controls to
+revoke the grant. Never place tokens in the power or repository.
 
-- **The server shows Unauthenticated or the initial connection reports
-  Unauthorized.** In the **Kiro** sidebar, expand **MCP Servers** and select
-  **Authenticate** on the power's namespaced n8n server. In Kiro 1.1.70, power
-  activation alone did not open OAuth; this control did. Let the user review
-  the requested permissions on the n8n authorization page.
-- **The browser window did not open or was closed.** Ask the user to retry the
-  **Authenticate** action and check for Kiro's external-website prompt.
-- **The browser says the request expired or was already completed.** Check
-  whether Kiro timed out. In the 1.1.70 live test, the connection timeout was
-  60 seconds. Close the stale page and use **Retry**, then **Authenticate**
-  when the user is ready. Complete the newly opened flow; do not reuse an old
-  authorization URL or weaken callback validation.
-- **OAuth rejects the callback URL.** An admin may have restricted allowed
-  callback URLs. Compare the reported callback with the instance's allowlist;
-  do not disable that restriction as a workaround.
-- **A call returns 401 after working earlier.** The token may have expired or
-  access may have been revoked. Stop and reconnect before another tool call.
-- **The browser reports success but Kiro reports a missing `client_id`.**
-  Browser callback success does not prove a successful token exchange. A live
-  Kiro 1.1.70 test found an instance advertising `client_secret_basic` whose
-  token endpoint required `client_id` in the body instead. Record the client
-  and n8n versions and the exact error; do not call this a missing user consent
-  or keep asking the user to authorize. See the
-  [compatibility report](../../docs/oauth-compatibility.md). Do not inject
-  credentials, change authentication methods, or bypass OAuth to hide the error.
+If the user explicitly chooses MCP access-token authentication, follow the
+[documented fallback](../../README.md#token-fallback). Keep tokens out of chat
+and source files. Do not silently switch authentication methods or use the n8n
+REST API for workflow operations.
 
-## When a tool or workflow is unavailable
-
-Name the missing tool or workflow and what you need it for. Check these causes:
-
-1. **Version.** These skills target n8n 2.34.0 or later. Earlier releases use
-   different names for execution and other tools. Recommend a current stable
-   version; do not invent calls to an unavailable tool.
-2. **Features and license.** Builder tools can be disabled with
-   `N8N_MCP_BUILDER_ENABLED=false`. Folder tools require the folders feature.
-   Disabled workflow tags remove the tag tool. Reconnecting cannot enable these.
-3. **OAuth grant.** If the tool exists on this instance but was not granted,
-   reconnect to request the needed permission. Do not ask for all permissions.
-4. **Workflow exposure and user access.** Search can return a preview even when
-   **Available in MCP** is off. Inspection, testing, and editing also require
-   workflow exposure and the user's own n8n permissions. Follow the returned
-   error to distinguish these conditions; a new OAuth grant cannot grant a
-   project role the user does not have.
-
-## What not to do
-
-- Do not report the power as working because the config file exists.
-- Do not fall back to the n8n REST API or an API key. This power uses MCP only.
-- Do not try to enable MCP access on the instance yourself. It is an instance
-  setting and the user has to make that decision.
+See [helper operations and recovery](../../docs/setup-helper.md) for details.

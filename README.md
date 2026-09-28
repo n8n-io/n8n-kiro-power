@@ -4,11 +4,20 @@ Build, run, and debug [n8n](https://n8n.io) workflows from Kiro using the code i
 your workspace. This power connects to the MCP server built into your n8n Cloud
 or self-hosted instance with OAuth.
 
-**Release status:** live testing with Kiro 1.1.70 reached browser authorization,
-but the MCP token exchange failed. The tested instance advertises an OAuth
-client-authentication method its token endpoint rejects. See the
-[compatibility blocker and reproduction](docs/oauth-compatibility.md).
-End-to-end workflow operation is not yet verified.
+**Release status:** implementation candidate. This package now uses a bundled
+setup helper and native Kiro MCP settings with public-client OAuth. The approach
+passed real browser sign-in, workflow creation/execution, refresh and reconnect
+against local n8n without the OAuth Basic-authentication fix. Cloud verification,
+installed-package onboarding, and unaided native workflow repair remain release
+gates. It is not ready for registry submission.
+
+See the [acceptance evidence](docs/public-oauth-acceptance.md),
+[new helper validation](docs/setup-helper-acceptance.md),
+[setup helper guide](docs/setup-helper.md), and
+[implementation plan](docs/public-oauth-implementation-plan.md). The earlier
+[OAuth failure](docs/oauth-compatibility.md) and
+[bundled-power schema issue](docs/kiro-tool-schema-compatibility.md) remain
+recorded separately.
 
 ## What it does
 
@@ -32,7 +41,9 @@ and are outside this power's release scope.
 - **n8n 2.34.0 or later**, using a current stable patch release. This is the
   compatibility floor for the tool names used by these skills. Earlier versions
   use different execution tool names. See the [MCP tool reference](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference).
-- Kiro IDE with Agent Plugins support and network access to your instance.
+- **Kiro IDE 1.1.70**, running locally with network access to your instance.
+  The helper currently guards to this tested version.
+- **Node.js 22+**, available to Kiro when it runs the setup helper.
 - An instance owner or admin must enable **Settings > Instance-level MCP**.
 - To inspect, run, or change an existing workflow, enable **Available in MCP**
   for that workflow and ensure your n8n user has the necessary permissions.
@@ -44,81 +55,66 @@ The [release checklist](docs/release-checklist.md) records validation status and
 the exact versions used for live testing. A compatibility floor is not a claim
 that every version has been tested.
 
-## Install
+## Install and connect
 
-Use a local folder so you can set your instance URL before Kiro imports the
-power. The URL is different for each user.
+1. Clone/download the candidate branch and use **Kiro > Powers > Add Custom
+   Power > Import power from a folder**. Select the folder containing
+   `plugin.json`. The default GitHub branch must contain the release before its
+   repository URL can be used for the public listing.
+2. Ask Kiro to connect to your n8n instance and provide its base URL or full MCP
+   endpoint. The connection skill runs its bundled helper; no npm install or
+   token copying is needed. An administrator must already have enabled MCP.
+3. The helper adds a native user-level MCP connection, shared across projects.
+   Request workspace scope if you want only the current project. It preserves
+   unrelated settings and reports the configured server name.
+4. Select that server under **Kiro > MCP Servers > Authenticate**, sign in to
+   n8n, and review consent. Kiro 1.1.70 can request all advertised permissions:
+   select **Custom** and choose workflow read/write/execute plus execution read
+   for basic workflow tasks. Respect narrower grants when writes are unnecessary.
+5. Ask Kiro to perform a read-only workflow search. That confirms the connection;
+   a browser success page or a populated configuration alone does not.
 
-**1. Get the power.** Clone this repository or download and extract it:
+To run setup yourself from a checkout:
 
 ```sh
-git clone https://github.com/n8n-io/n8n-kiro-power.git
+node skills/connect-n8n/scripts/setup.mjs configure --url https://YOUR-N8N-HOST --workspace /absolute/path/to/project
 ```
 
-For an unmerged PR, check out its branch before you continue.
+Use HTTPS except on loopback. Supply the actual URL, preserving a deployment
+base path. The helper sets a five-minute connection timeout. If a browser request
+expires, use Retry then Authenticate in Kiro to start a fresh flow.
 
-**2. Copy your MCP URL.** In n8n, open **Settings > Instance-level MCP >
-Connection details > Connect**. Choose OAuth and copy the full **Server URL**.
-It ends in `/mcp-server/http`. See the [n8n connection guide](https://docs.n8n.io/connect/connect-to-n8n-mcp-server).
+This power has no bundled `mcp.json`; connection settings live in Kiro's native
+user or workspace configuration. The installed power's **Open powers config**
+control is not the setup path. Updates should preserve native settings, but the
+real update/reinstall flow remains an acceptance gate. For an older installation,
+verify the new connection before disabling the old bundled server. See
+[helper commands, migration and recovery](docs/setup-helper.md).
 
-**3. Configure the folder.** Open `mcp.json` at the root of the downloaded
-`n8n-kiro-power` folder, next to `plugin.json`. Replace the entire placeholder URL
-with the copied value:
+## Token fallback
+
+If registration or callback policy prevents OAuth, you can explicitly choose an
+n8n MCP access token. Open n8n's MCP connection settings and copy your token into
+secure local storage or an environment variable available to the Kiro process.
+Keep it out of chat and the repository. Configure a separately named native MCP
+entry with an Authorization header referencing that variable:
 
 ```json
 {
-  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
-    "n8n": {
-      "type": "streamable-http",
-      "url": "https://YOUR-N8N-HOST/mcp-server/http"
+    "n8n-token": {
+      "url": "https://YOUR-N8N-HOST/mcp-server/http",
+      "headers": { "Authorization": "Bearer ${N8N_MCP_ACCESS_TOKEN}" }
     }
   }
 }
 ```
 
-Use HTTPS except for a loopback address such as `http://localhost:5678`.
-Do not put tokens or passwords in this file. Agent Plugins requires a literal
-URL and does not expand environment variables in this field.
-
-**4. Import the configured folder.** In Kiro, open **Powers > Add Custom Power >
-Import power from a folder** and select the folder containing `plugin.json`.
-This follows Kiro's [local installation procedure](https://kiro.dev/docs/powers/installation/).
-Agent Plugins MCP servers are managed internally by Kiro; they do not appear in
-the user-level `~/.kiro/settings/mcp.json`.
-
-**5. Connect and authorize.** Ask Kiro to connect to n8n to activate the power.
-In the **Kiro** sidebar, expand **MCP Servers**. If the power's n8n server shows
-**Unauthenticated**, choose **Authenticate**. Allow Kiro to open your n8n
-authorization page, complete the browser sign-in, and review the requested
-permissions. Then ask Kiro to search for a workflow. A successful read confirms
-the connection. This power uses OAuth; it does not require an API key or token
-to be pasted.
-
-In Kiro 1.1.70, activation alone reported **No tools available** and logged
-**Unauthorized** until **Authenticate** was selected. That control started the
-OAuth browser flow. Do not treat either message as evidence that your instance
-has no workflows.
-
-If the browser says the authorization request expired or was already completed,
-close that page and retry from Kiro. In this test Kiro stopped waiting after
-60 seconds. Select **Retry** if the connection failed, then **Authenticate**
-when you are ready to complete the browser flow. Use the newly opened page.
-
-For an already installed power, including one imported from GitHub, open
-**Powers > n8n > Open powers config** to open its installed `mcp.json`. Set your
-Server URL there and save, then reconnect through **MCP Servers**. This avoids
-guessing Kiro's internal installation directory. The button and file location
-were verified in Kiro 1.1.70; authenticated reconnection and GitHub installation
-remain on the [release checklist](docs/release-checklist.md).
-
-If you change your instance URL, edit the same local folder and import it again.
-The imported package is a separate copy. After an update or reinstall, open
-**Open powers config** and confirm that it still contains your intended host;
-do not assume edits to the installed copy survive an update.
-
-A Kiro cloud session runs remotely. It cannot reach an instance that is only
-available on your local network; `localhost` would refer to that remote machine.
+Approve the variable for expansion in Kiro when prompted. A GUI-launched Kiro
+may not inherit terminal variables, and token rotation requires updating its
+value. The OAuth helper does not store tokens or adopt this entry. See the
+[token acceptance report](docs/token-auth-acceptance.md) for the tested launch
+method and its limits. Never paste the actual token into the example.
 
 ## Access and troubleshooting
 
@@ -154,8 +150,12 @@ context, connection checks, test interpretation, and a debugging process.
 
 ## Privacy
 
-Your workflow data goes between your n8n instance and Kiro. This power adds no
-intermediate service: it contains configuration and instructions only.
+Your workflow data goes between your n8n instance and Kiro. The bundled helper
+contacts that instance for OAuth discovery and public-client registration, then
+writes local Kiro configuration and nonsecret registration metadata. Kiro handles
+browser authorization and stores tokens. The helper adds no proxy, background
+service, telemetry or token storage. Restricted local config backups may include
+secrets belonging to other MCP entries; do not commit or share those backups.
 
 - [n8n privacy policy](https://n8n.io/legal/privacy/)
 - [Kiro data protection](https://kiro.dev/docs/privacy-and-security/data-protection/)

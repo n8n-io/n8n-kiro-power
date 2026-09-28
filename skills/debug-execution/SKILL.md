@@ -13,6 +13,8 @@ Use this when a workflow failed, produced the wrong result, or stopped running.
 Work from evidence. Do not guess from the workflow definition alone.
 Apply the [connect-n8n pre-flight](../connect-n8n/SKILL.md) before the first n8n
 tool call in a conversation. Use the schemas the server actually lists.
+Keep investigation and repair on the native connection selected by that
+preflight. Resolve an ambiguous instance before reading or changing a workflow.
 
 ## Order of investigation
 
@@ -61,6 +63,13 @@ credential" is not a diagnosis when you can read the error.
 
 ## Fixing
 
+- Read `update_workflow`'s advertised input schema before constructing operations.
+  Its operation and node objects are not Workflow SDK factory calls. If Kiro
+  truncates tool discovery, inspect its saved response. Kiro 1.1.70's old bundled
+  power path omits nested schemas entirely; its saved response cannot recover those
+  fields. Report this [client limitation](../../docs/kiro-tool-schema-compatibility.md)
+  before editing if the operation schema is unavailable. Do not infer field
+  names from SDK code or an error message.
 - Apply the grounded fix with `update_workflow`. Inspect validation warnings.
   Before any test, apply the [build-workflow test checks](../build-workflow/SKILL.md#test-before-you-claim-it-works):
   prepare pin data, inspect which nodes remain unpinned, and obtain authorization

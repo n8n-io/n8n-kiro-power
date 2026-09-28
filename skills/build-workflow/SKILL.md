@@ -11,11 +11,25 @@ metadata:
 
 Apply the [connect-n8n pre-flight](../connect-n8n/SKILL.md) before the first n8n
 tool call in a conversation. Use the tools and schemas the server actually lists.
+Use the native connection selected by that preflight throughout the task. If
+multiple instances are present, resolve the intended one before any write.
 
 The n8n MCP server sends its own build instructions when it connects. Those cover
 the tool sequence: read the SDK reference, get best practices, discover nodes, get
 node types, validate, then save. **Follow them. Do not re-derive them and do not
 work around them.**
+
+Locate `get_workflow_sdk_reference` and `get_workflow_best_practices` in the
+advertised tools and use their returned schemas. If Kiro truncates the activation
+result, read its saved tool response before choosing a tool. Do not guess a tool
+name from the task description or skip the references when a guessed name fails.
+
+Kiro 1.1.70's bundled-power activation text omits nested schemas and enum choices.
+Native MCP workflow updates still need acceptance testing.
+Reading the saved response does not restore those omitted fields. If a needed
+object or array schema is missing, report that client limitation before the
+affected call; do not construct unknown arguments by trial and error. See the
+[schema compatibility report](../../docs/kiro-tool-schema-compatibility.md).
 
 This file covers what the server cannot know: you are in an editor, with the
 user's code open.
@@ -102,6 +116,10 @@ authorized. Specify the intended execution mode, trigger, and inputs using the
 advertised schema. Follow the returned execution ID with `get_workflow_execution`
 and request `includeData: true` when node results are needed. A started execution
 is not a completed test. Report success only after reading its final result.
+
+A Manual Trigger emits an empty item. If a repeatable manual smoke test needs
+sample input, add a pure data node that supplies it. The pin-data map passed to
+`test_workflow` does not supply input to a later `execute_workflow` call.
 
 ## Publishing
 
