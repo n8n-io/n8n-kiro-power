@@ -10,6 +10,5 @@
     "test": "node --test test/setup/*.test.mjs",
     "check": "npm run build:check && npm test && node scripts/check-package.mjs"
   },
-  "dependencies": { "jsonc-parser": "3.3.1" },
-  "devDependencies": { "esbuild": "0.28.2" }
+  "devDependencies": { "esbuild": "0.28.2", "jsonc-parser": "3.3.1" }
 }

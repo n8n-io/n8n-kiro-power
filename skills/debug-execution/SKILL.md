@@ -18,9 +18,12 @@ preflight. Resolve an ambiguous instance before reading or changing a workflow.
 
 ## Order of investigation
 
-1. **Find the run.** `search_workflow_executions` for the workflow, filtered to
-   failures. Take the most recent one, and note whether failures are constant or
-   intermittent. That distinction changes the diagnosis more than anything else.
+1. **Find the relevant run.** Use the execution the user identified, or search
+   with `search_workflow_executions` for the workflow and reported time. For an
+   execution error, filter to failures. For incorrect output, include successful
+   runs too. If the workflow stopped running, check when it last ran; do not
+   substitute an unrelated old failure. Note whether the problem is constant or
+   intermittent.
 2. **Open it.** Call `get_workflow_execution` with `includeData: true` to read
    node results; the default response contains metadata only. Use `nodeNames`
    and `truncateData` when useful to limit the returned data. Find the first
@@ -67,7 +70,7 @@ credential" is not a diagnosis when you can read the error.
   Its operation and node objects are not Workflow SDK factory calls. If Kiro
   truncates tool discovery, inspect its saved response. Kiro 1.1.70's old bundled
   power path omits nested schemas entirely; its saved response cannot recover those
-  fields. Report this [client limitation](../../docs/kiro-tool-schema-compatibility.md)
+  fields. Report this [client limitation](../../docs/setup-helper.md#troubleshooting)
   before editing if the operation schema is unavailable. Do not infer field
   names from SDK code or an error message.
 - Apply the grounded fix with `update_workflow`. Inspect validation warnings.

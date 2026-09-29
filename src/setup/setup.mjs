@@ -54,9 +54,10 @@ export async function runSetup(options, dependencies = {}) {
     const record = state.connections[key];
     const configText = await readSnapshot(paths.configPath);
     const config = parseConfig(configText);
-    const entry = config.mcpServers?.[serverName];
+    const entry = Object.hasOwn(config.mcpServers ?? {}, serverName) ? config.mcpServers[serverName] : undefined;
     if (record && (record.endpoint !== endpoint || record.configPath !== paths.configPath || record.serverName !== serverName)) fail('STATE_CONFLICT', 'The saved connection identifies a different endpoint or settings file. Use a different name.');
     checkOwnership(entry, record);
+    const installedFingerprint = entry === undefined ? undefined : fingerprint(entry);
     if (paths.overridePath && command !== 'remove') {
       const override = parseConfig(await readSnapshot(paths.overridePath));
       if (Object.hasOwn(override.mcpServers ?? {}, serverName)) fail('WORKSPACE_OVERRIDE', 'This workspace overrides the user-level server. Select workspace scope or a different name before configuring.');
@@ -99,7 +100,7 @@ export async function runSetup(options, dependencies = {}) {
     if (newRegistration) {
       active = { endpoint, ...discovery, serverName, configPath: paths.configPath, scope: paths.scope,
         kiroVersion: version, callbackPort: port, status: 'registering',
-        ...(record?.fingerprint ? { fingerprint: record.fingerprint } : {}) };
+        ...(installedFingerprint ? { fingerprint: installedFingerprint } : {}) };
       state.connections[key] = active;
       // Journal before POST: a crash/timeout must not cause an automatic duplicate registration.
       await saveState();
@@ -117,10 +118,10 @@ export async function runSetup(options, dependencies = {}) {
     const desired = connectionConfig(endpoint, active.clientId, port);
     const changed = entry === undefined || fingerprint(entry) !== fingerprint(desired);
     const nextConfig = changed ? editConfig(configText, serverName, desired) : configText;
-    const previousFingerprint = active.fingerprint;
     active.fingerprint = fingerprint(desired);
-    // Store both accepted fingerprints across the write, allowing a crash to resume.
-    if (previousFingerprint && previousFingerprint !== active.fingerprint) active.previousFingerprint = previousFingerprint;
+    // Keep ownership of the installed entry until replacement succeeds, including repeated repairs.
+    if (installedFingerprint && installedFingerprint !== active.fingerprint) active.previousFingerprint = installedFingerprint;
+    else delete active.previousFingerprint;
     await saveState();
     await write(paths.configPath, configText, nextConfig);
     delete active.previousFingerprint;

@@ -29,7 +29,7 @@ Native MCP workflow updates still need acceptance testing.
 Reading the saved response does not restore those omitted fields. If a needed
 object or array schema is missing, report that client limitation before the
 affected call; do not construct unknown arguments by trial and error. See the
-[schema compatibility report](../../docs/kiro-tool-schema-compatibility.md).
+[setup troubleshooting](../../docs/setup-helper.md#troubleshooting).
 
 This file covers what the server cannot know: you are in an editor, with the
 user's code open.

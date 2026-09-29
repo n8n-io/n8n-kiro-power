@@ -48,10 +48,17 @@ for (const [name, registration] of [
 });
 
 test('network timeout does not retry registration or expose response details', async t => {
-  let posts = 0;
-  const f = await fixture(t, { handle(req) { if (req.url === '/register') { posts++; return true; } } });
-  await assert.rejects(register(await discover(f.endpoint), 'http://localhost:4567/oauth/callback', { timeout: 30 }), { code: 'REGISTRATION_UNCERTAIN' });
-  assert.equal(posts, 1);
+  const f = await fixture(t);
+  let attempts = 0;
+  await assert.rejects(register(await discover(f.endpoint), 'http://localhost:4567/oauth/callback', {
+    timeout: 30,
+    fetchImpl: async (_url, { signal }) => {
+      attempts++;
+      signal.throwIfAborted();
+      return await new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+    },
+  }), { code: 'REGISTRATION_UNCERTAIN' });
+  assert.equal(attempts, 1);
 });
 
 test('rejects redirects without following them', async t => {

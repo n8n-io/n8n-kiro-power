@@ -11,9 +11,15 @@ export async function fixture(t, changes = {}) {
   let origin;
   const base = changes.base ?? '';
   const server = createServer(async (req, res) => {
-    let raw = '';
-    for await (const part of req) raw += part;
-    const body = raw ? JSON.parse(raw) : undefined;
+    let body;
+    try {
+      let raw = '';
+      for await (const part of req) raw += part;
+      body = raw ? JSON.parse(raw) : undefined;
+    } catch {
+      if (!res.destroyed) res.writeHead(400, { 'Content-Type': 'application/json' }).end('{"error":"invalid_request"}');
+      return;
+    }
     requests.push({ method: req.method, path: req.url, body, headers: req.headers });
     const send = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); };
     if (await changes.handle?.(req, res, body)) return;

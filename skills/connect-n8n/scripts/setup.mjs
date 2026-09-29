@@ -1619,7 +1619,7 @@ async function readSnapshot(file) {
   await assertSafePath(file);
   try {
     const stat = await lstat(file);
-    if (!stat.isFile() || stat.size > MAX_FILE_BYTES) fail("FILE_SIZE", "Settings must be a regular file smaller than 1 MiB.");
+    if (!stat.isFile() || stat.size > MAX_FILE_BYTES) fail("FILE_SIZE", "Settings must be a regular file no larger than 1 MiB.");
     return await readFile2(file, "utf8");
   } catch (error) {
     if (error.code === "ENOENT") return null;
@@ -1687,10 +1687,10 @@ async function withLock(file, action) {
   }
 }
 async function atomicWrite(file, original, next) {
-  if (next === original) return;
-  await assertSafePath(file);
-  await mkdir(path.dirname(file), { recursive: true, mode: 448 });
+  if (Buffer.byteLength(next, "utf8") > MAX_FILE_BYTES) fail("FILE_SIZE", "Updated settings would exceed 1 MiB. No file was replaced.");
   if (await readSnapshot(file) !== original) fail("CONCURRENT_EDIT", "Settings changed during setup. Rerun to inspect the current file; the new registration is retained.");
+  if (next === original) return;
+  await mkdir(path.dirname(file), { recursive: true, mode: 448 });
   const temporary = `${file}.${randomUUID()}.tmp`;
   let backup;
   try {
@@ -1762,9 +1762,10 @@ async function runSetup(options, dependencies = {}) {
     const record = state.connections[key];
     const configText = await readSnapshot(paths.configPath);
     const config = parseConfig(configText);
-    const entry = config.mcpServers?.[serverName];
+    const entry = Object.hasOwn(config.mcpServers ?? {}, serverName) ? config.mcpServers[serverName] : void 0;
     if (record && (record.endpoint !== endpoint || record.configPath !== paths.configPath || record.serverName !== serverName)) fail("STATE_CONFLICT", "The saved connection identifies a different endpoint or settings file. Use a different name.");
     checkOwnership(entry, record);
+    const installedFingerprint = entry === void 0 ? void 0 : fingerprint(entry);
     if (paths.overridePath && command !== "remove") {
       const override = parseConfig(await readSnapshot(paths.overridePath));
       if (Object.hasOwn(override.mcpServers ?? {}, serverName)) fail("WORKSPACE_OVERRIDE", "This workspace overrides the user-level server. Select workspace scope or a different name before configuring.");
@@ -1821,7 +1822,7 @@ async function runSetup(options, dependencies = {}) {
         kiroVersion: version,
         callbackPort: port,
         status: "registering",
-        ...record?.fingerprint ? { fingerprint: record.fingerprint } : {}
+        ...installedFingerprint ? { fingerprint: installedFingerprint } : {}
       };
       state.connections[key] = active;
       await saveState();
@@ -1838,9 +1839,9 @@ async function runSetup(options, dependencies = {}) {
     const desired = connectionConfig(endpoint, active.clientId, port);
     const changed = entry === void 0 || fingerprint(entry) !== fingerprint(desired);
     const nextConfig = changed ? editConfig(configText, serverName, desired) : configText;
-    const previousFingerprint = active.fingerprint;
     active.fingerprint = fingerprint(desired);
-    if (previousFingerprint && previousFingerprint !== active.fingerprint) active.previousFingerprint = previousFingerprint;
+    if (installedFingerprint && installedFingerprint !== active.fingerprint) active.previousFingerprint = installedFingerprint;
+    else delete active.previousFingerprint;
     await saveState();
     await write(paths.configPath, configText, nextConfig);
     delete active.previousFingerprint;

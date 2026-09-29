@@ -63,6 +63,20 @@ test('unmanaged name collision and malformed JSON stop before registration', asy
   assert.equal(f.count(), 0);
 });
 
+test('custom names inherited from Object.prototype are ordinary server entries', async t => {
+  const f = await fixture(t);
+  await mkdir(path.dirname(f.configPath), { recursive: true });
+  await writeFile(f.configPath, '{"mcpServers":{}}');
+  for (const name of ['toString', 'hasOwnProperty']) {
+    const options = { ...f.options, name };
+    await runSetup(options, f.deps);
+    assert.equal((await runSetup(options, f.deps)).registration, 'reused');
+    assert.ok(Object.hasOwn(parseConfig(await readFile(f.configPath, 'utf8')).mcpServers, name));
+    assert.equal((await runSetup({ ...options, command: 'remove' }, f.deps)).status, 'removed');
+  }
+  assert.equal(f.count(), 2);
+});
+
 test('user changes to a managed entry are preserved by configure, repair and remove', async t => {
   const f = await fixture(t);
   await runSetup(f.options, f.deps);
@@ -130,6 +144,44 @@ test('failed replacement config write resumes with old entry ownership intact', 
   assert.notEqual(parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'].headers['X-N8N-Kiro-Connection'], originalHeader);
 });
 
+for (const command of ['configure', 'repair', 'remove']) {
+  test(`${command} recovers after consecutive replacement config-write failures`, async t => {
+    const f = await fixture(t);
+    await runSetup(f.options, f.deps);
+    const installed = await readFile(f.configPath, 'utf8');
+    const failedWrite = { ...f.deps, atomicWrite: async (file, ...args) => {
+      if (file === f.configPath) throw new Error('simulated disk failure');
+      return await atomicWrite(file, ...args);
+    } };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await assert.rejects(runSetup({ ...f.options, command: 'repair', newRegistration: true }, failedWrite), /simulated disk failure/);
+      assert.equal(await readFile(f.configPath, 'utf8'), installed);
+    }
+    const result = await runSetup({ ...f.options, command, newRegistration: command === 'repair' }, f.deps);
+    assert.equal(result.status, command === 'remove' ? 'removed' : 'configured_awaiting_authorization');
+    assert.equal(f.count(), command === 'repair' ? 4 : 3);
+    const entry = parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'];
+    if (command === 'remove') assert.equal(entry, undefined);
+    else assert.equal(entry.oauth.clientId, `test-client-${command === 'repair' ? 4 : 3}`);
+  });
+}
+
+test('a rejected repair after a failed config write preserves ownership for removal', async t => {
+  const f = await fixture(t);
+  await runSetup(f.options, f.deps);
+  await assert.rejects(runSetup({ ...f.options, command: 'repair', newRegistration: true }, {
+    ...f.deps, atomicWrite: async (file, ...args) => {
+      if (file === f.configPath) throw new Error('simulated disk failure');
+      return await atomicWrite(file, ...args);
+    },
+  }), /simulated disk failure/);
+  await assert.rejects(runSetup({ ...f.options, command: 'repair', newRegistration: true }, {
+    ...f.deps, register: async () => { throw new Error('registration rejected'); },
+  }), /registration rejected/);
+  assert.equal((await runSetup({ ...f.options, command: 'remove' }, f.deps)).status, 'removed');
+  assert.equal(f.count(), 2);
+});
+
 test('uncertain registration is journaled and requires explicit repair to retry', async t => {
   const f = await fixture(t);
   await assert.rejects(runSetup(f.options, { ...f.deps, register: async () => { throw new Error('simulated interrupted POST'); } }));
@@ -160,6 +212,26 @@ test('atomic writes reject concurrent changes and preserve the external edit', a
   await writeFile(path.join(f.root, 'settings.json'), 'new');
   await assert.rejects(atomicWrite(path.join(f.root, 'settings.json'), 'old', 'replacement'), { code: 'CONCURRENT_EDIT' });
   assert.equal(await readFile(path.join(f.root, 'settings.json'), 'utf8'), 'new');
+});
+
+test('unchanged writes still detect a concurrent edit', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.root, 'settings.json');
+  await writeFile(file, 'external edit');
+  await assert.rejects(atomicWrite(file, 'old', 'old'), { code: 'CONCURRENT_EDIT' });
+  assert.equal(await readFile(file, 'utf8'), 'external edit');
+});
+
+test('oversized writes are rejected by UTF-8 byte size before creating files or backups', async t => {
+  const f = await fixture(t);
+  const file = path.join(f.root, 'settings.json');
+  const oversized = 'ü'.repeat(512 * 1024 + 1);
+  await assert.rejects(atomicWrite(file, null, oversized), { code: 'FILE_SIZE' });
+  assert.deepEqual(await readdir(f.root), []);
+  await writeFile(file, '{}');
+  await assert.rejects(atomicWrite(file, '{}', oversized), { code: 'FILE_SIZE' });
+  assert.equal(await readFile(file, 'utf8'), '{}');
+  assert.deepEqual(await readdir(f.root), ['settings.json']);
 });
 
 test('locks reject another writer and are released even on failure', async t => {

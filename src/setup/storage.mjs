@@ -29,7 +29,7 @@ export async function readSnapshot(file) {
   await assertSafePath(file);
   try {
     const stat = await lstat(file);
-    if (!stat.isFile() || stat.size > MAX_FILE_BYTES) fail('FILE_SIZE', 'Settings must be a regular file smaller than 1 MiB.');
+    if (!stat.isFile() || stat.size > MAX_FILE_BYTES) fail('FILE_SIZE', 'Settings must be a regular file no larger than 1 MiB.');
     return await readFile(file, 'utf8');
   } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
 }
@@ -92,10 +92,10 @@ export async function withLock(file, action) {
 }
 
 export async function atomicWrite(file, original, next) {
-  if (next === original) return;
-  await assertSafePath(file);
-  await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
+  if (Buffer.byteLength(next, 'utf8') > MAX_FILE_BYTES) fail('FILE_SIZE', 'Updated settings would exceed 1 MiB. No file was replaced.');
   if (await readSnapshot(file) !== original) fail('CONCURRENT_EDIT', 'Settings changed during setup. Rerun to inspect the current file; the new registration is retained.');
+  if (next === original) return;
+  await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
   const temporary = `${file}.${randomUUID()}.tmp`;
   let backup;
   try {
