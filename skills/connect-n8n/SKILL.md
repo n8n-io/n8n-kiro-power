@@ -55,8 +55,18 @@ Do not assume `${PLUGIN_ROOT}` is set or that the user's project contains the
 power source. Run the helper; it needs no npm install:
 
 ```sh
-node "<absolute installed path>/connect-n8n/scripts/setup.mjs" configure --url "<the user's n8n URL>" --workspace "<absolute project path>" --json
+node "<absolute installed path>/connect-n8n/scripts/setup.mjs" configure --url "<the user's n8n URL>" --json
 ```
+
+Keep the command as short as the task allows. `--workspace` is optional for the
+default user scope, so add it only for workspace scope or to check project
+overrides. Long single-line commands have been observed rendering incorrectly in
+Kiro's terminal.
+
+If the terminal echoes a corrupted command, or the run produces no output at
+all, do not retry variations of it and do not write a wrapper script. Give the
+user the exact command to run in their own terminal and ask them to paste the
+result back. The helper is safe to run by hand and prints the same JSON.
 
 Default setup writes user settings at `~/.kiro/settings/mcp.json`, making the
 connection available across projects. Explain that scope. Add `--scope workspace`

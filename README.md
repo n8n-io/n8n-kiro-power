@@ -4,9 +4,10 @@ Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Status: draft candidate.** Public-client OAuth works against local n8n without
-server changes. Cloud authorization, installed-power onboarding, and native
-workflow repair still require acceptance testing. See the
+**Status: draft candidate.** Public-client OAuth is verified end to end against
+both a local and a cloud instance, from an installed power, through Kiro
+authorization to a successful workflow read. The build, test, and repair loops
+still require acceptance testing. See the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements
@@ -46,11 +47,12 @@ are a separate Preview feature and are outside this release.
 For manual setup from this checkout:
 
 ```sh
-node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL> --workspace <absolute path to your project>
+node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL>
 ```
 
-Replace both angle-bracket values. Use HTTPS except on loopback, and preserve
-any deployment base path. Settings
+Replace the angle-bracket value. Use HTTPS except on loopback, and preserve any
+deployment base path. Add `--workspace <absolute project path>` only for
+workspace scope. Settings
 live in Kiro's native configuration; this power ships no root `mcp.json`.
 See the [setup guide](docs/setup-helper.md) for repair, removal, and migration.
 

@@ -15,11 +15,16 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | Cross-platform CI | `20f9df6` passed Node 22/24 on macOS, Linux, and Windows plus manifest validation. Check the candidate commit's CI before release; helper tests do not establish IDE support on every OS. |
 | New helper and OAuth | On 2026-09-28, Kiro 1.1.70 completed fresh S256 PKCE consent with a helper-created public client, discovered 23 tools, and called `search_workflows` successfully. Target: isolated local n8n 2.41.0 development without the Basic-authentication patch; disposable workspace configuration. |
 | Earlier public-OAuth proof | Synthetic workflow creation/execution, refresh, revocation, and reconnect passed locally before the final helper was packaged. This is not installed-package acceptance. |
-| Cloud | Discovery dry-run passed. Browser authorization and MCP operations with the new helper remain unverified. |
+| Cloud | On 2026-09-30, an installed power on local Kiro 1.1.70 configured a public client against a cloud instance, completed browser authorization and consent, and returned results from `search_workflows`. Build, test, publish, and repair loops were not exercised. |
 
 The detailed September 25–28 investigation and test records are preserved at
 [the reviewed commit](https://github.com/n8n-io/n8n-kiro-power/tree/20f9df620045dd0418e78f52459a5e2a413f6013/docs).
 Their packaging statements describe those experiments, not the current package.
+
+Known client issue: Kiro's terminal rendered long single-line helper commands
+incorrectly during that session, so the command was run in the user's own
+terminal instead. The connect skill now prefers the shorter form and tells the
+agent to hand the command over rather than retry variations.
 
 ## Acceptance gates
 
