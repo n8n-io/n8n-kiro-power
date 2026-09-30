@@ -5,10 +5,9 @@ import { SetupError } from './errors.mjs';
 
 export { runSetup };
 
-// Single source of truth for the CLI surface. check-package.mjs validates every
-// documented command against these, so an example cannot name a flag or command
-// that does not exist.
-export const COMMANDS = ['configure', 'doctor', 'repair', 'remove'];
+// The flag surface. check-package.mjs validates every documented command
+// against this and against COMMANDS in setup.mjs, so an example cannot name a
+// flag or a command that does not exist.
 export const OPTIONS = {
   url: { type: 'string' }, name: { type: 'string' }, scope: { type: 'string' }, workspace: { type: 'string' },
   'callback-port': { type: 'string' }, 'kiro-version': { type: 'string' },

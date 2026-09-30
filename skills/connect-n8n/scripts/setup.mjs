@@ -1723,6 +1723,7 @@ async function atomicWrite(file, original, next) {
 }
 
 // src/setup/setup.mjs
+var COMMANDS = ["configure", "doctor", "repair", "remove"];
 var consentNote = "Kiro 1.1.70 may request all permissions. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.";
 async function locations(options, home) {
   const root = await realpath(home);
@@ -1744,7 +1745,7 @@ function checkOwnership(entry, record) {
 }
 async function runSetup(options, dependencies = {}) {
   const command = options.command ?? "configure";
-  if (!["configure", "doctor", "repair", "remove"].includes(command)) fail("ARGUMENT", "Choose configure, doctor, repair or remove.");
+  if (!COMMANDS.includes(command)) fail("ARGUMENT", `Choose ${COMMANDS.join(", ")}.`);
   if (!options.url) fail("ARGUMENT", "--url is required to identify the intended instance.");
   if (options.newRegistration && command !== "repair") fail("ARGUMENT", "--new-registration is only available with repair.");
   if (command === "repair" && !options.newRegistration && options.callbackPort === void 0) fail("ARGUMENT", "Repair requires --new-registration or a new --callback-port. Use doctor first.");
@@ -1865,7 +1866,6 @@ async function runSetup(options, dependencies = {}) {
 }
 
 // src/setup/cli.mjs
-var COMMANDS = ["configure", "doctor", "repair", "remove"];
 var OPTIONS = {
   url: { type: "string" },
   name: { type: "string" },
@@ -1918,7 +1918,6 @@ async function main(args = process.argv.slice(2)) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
 export {
-  COMMANDS,
   OPTIONS,
   main,
   runSetup

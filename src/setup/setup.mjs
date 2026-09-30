@@ -6,6 +6,10 @@ import { defaultName, discover, normalizeEndpoint, register } from './discovery.
 import { fail } from './errors.mjs';
 import { atomicWrite, editConfig, fingerprint, parseConfig, parseState, readSnapshot, withLock } from './storage.mjs';
 
+// Owned here because runSetup dispatches on it. cli.mjs and the documentation
+// check import this list so a documented command cannot diverge from what runs.
+export const COMMANDS = ['configure', 'doctor', 'repair', 'remove'];
+
 const consentNote = 'Kiro 1.1.70 may request all permissions. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.';
 
 async function locations(options, home) {
@@ -30,7 +34,7 @@ function checkOwnership(entry, record) {
 
 export async function runSetup(options, dependencies = {}) {
   const command = options.command ?? 'configure';
-  if (!['configure', 'doctor', 'repair', 'remove'].includes(command)) fail('ARGUMENT', 'Choose configure, doctor, repair or remove.');
+  if (!COMMANDS.includes(command)) fail('ARGUMENT', `Choose ${COMMANDS.join(', ')}.`);
   if (!options.url) fail('ARGUMENT', '--url is required to identify the intended instance.');
   if (options.newRegistration && command !== 'repair') fail('ARGUMENT', '--new-registration is only available with repair.');
   if (command === 'repair' && !options.newRegistration && options.callbackPort === undefined) fail('ARGUMENT', 'Repair requires --new-registration or a new --callback-port. Use doctor first.');

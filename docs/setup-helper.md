@@ -23,9 +23,16 @@ Remote URLs require HTTPS. Discovery currently requires a 401 resource-metadata
 challenge and one same-origin OAuth server advertising public clients, S256 PKCE,
 and refresh. Cross-origin identity providers and redirects are unsupported.
 
-User scope writes `~/.kiro/settings/mcp.json`; add `--scope workspace` to write the
-selected project's `.kiro/settings/mcp.json`. `--workspace` also checks project
-overrides when configuring user scope. Inspect agent-specific overrides in Kiro.
+User scope writes `~/.kiro/settings/mcp.json`. To write the selected project's
+`.kiro/settings/mcp.json` instead, pass both flags; `--scope workspace` on its
+own is rejected:
+
+```sh
+node skills/connect-n8n/scripts/setup.mjs configure --url "<your n8n URL>" --scope workspace --workspace "<absolute project path>"
+```
+
+`--workspace` on its own does not change the scope. It checks project overrides
+while still configuring user scope. Inspect agent-specific overrides in Kiro.
 Registration metadata lives in `~/.kiro/n8n-power/connections.json` without tokens.
 
 Keep the same URL, optional `--name`, scope, and workspace on later commands:

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { COMMANDS, OPTIONS } from '../src/setup/cli.mjs';
+import { OPTIONS } from '../src/setup/cli.mjs';
+import { COMMANDS } from '../src/setup/setup.mjs';
 
 const plugin = JSON.parse(await readFile('plugin.json', 'utf8'));
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
@@ -49,7 +50,7 @@ async function checkDocumentedCommands(directory) {
   const problems = [];
   for (const file of await markdownFiles(directory)) {
     const text = await readFile(file, 'utf8');
-    for (const [, block] of text.matchAll(/```sh\n([\s\S]*?)```/g)) {
+    for (const [, block] of text.replace(/\r\n/g, '\n').matchAll(/```sh\n([\s\S]*?)```/g)) {
       for (const line of block.split('\n').map(l => l.trim()).filter(Boolean)) {
         if (!line.includes('setup.mjs')) continue;
         const words = shellWords(line);
@@ -63,9 +64,21 @@ async function checkDocumentedCommands(directory) {
             if (!Object.hasOwn(OPTIONS, flag)) problems.push(`${file}: --${flag} is not a CLI option\n    ${line}`);
           }
         }
-        const command = words.find(word => COMMANDS.includes(word));
-        if (!command && !words.includes('--help')) {
-          problems.push(`${file}: names no command (${COMMANDS.join(', ')})\n    ${line}`);
+        // Find the positional the CLI would see, skipping flags and the values
+        // they consume. A command name used as an option value is not a command.
+        let command;
+        for (let index = words.indexOf(words.find(word => word.includes('setup.mjs'))) + 1; index < words.length; index++) {
+          const word = words[index];
+          if (word.startsWith('--')) {
+            const [flag, inlineValue] = word.slice(2).split('=');
+            if (OPTIONS[flag]?.type === 'string' && inlineValue === undefined) index++;
+            continue;
+          }
+          command = word;
+          break;
+        }
+        if (!words.includes('--help') && !COMMANDS.includes(command)) {
+          problems.push(`${file}: first positional is ${command ?? 'absent'}, not one of ${COMMANDS.join(', ')}\n    ${line}`);
         }
       }
     }
