@@ -1865,22 +1865,24 @@ async function runSetup(options, dependencies = {}) {
 }
 
 // src/setup/cli.mjs
+var COMMANDS = ["configure", "doctor", "repair", "remove"];
+var OPTIONS = {
+  url: { type: "string" },
+  name: { type: "string" },
+  scope: { type: "string" },
+  workspace: { type: "string" },
+  "callback-port": { type: "string" },
+  "kiro-version": { type: "string" },
+  "dry-run": { type: "boolean" },
+  "new-registration": { type: "boolean" },
+  json: { type: "boolean" },
+  help: { type: "boolean" }
+};
 async function main(args = process.argv.slice(2)) {
   let json = args.includes("--json");
   try {
     if (Number(process.versions.node.split(".")[0]) < 22) throw new SetupError("NODE_VERSION", "Install Node.js 22 or newer, then rerun setup. No settings were changed.");
-    const { values, positionals } = parseArgs({ args, allowPositionals: true, options: {
-      url: { type: "string" },
-      name: { type: "string" },
-      scope: { type: "string" },
-      workspace: { type: "string" },
-      "callback-port": { type: "string" },
-      "kiro-version": { type: "string" },
-      "dry-run": { type: "boolean" },
-      "new-registration": { type: "boolean" },
-      json: { type: "boolean" },
-      help: { type: "boolean" }
-    } });
+    const { values, positionals } = parseArgs({ args, allowPositionals: true, options: OPTIONS });
     json = Boolean(values.json);
     if (values.help) {
       console.log("Usage: node setup.mjs <configure|doctor|repair|remove> --url <n8n URL>\n\nOptions: --name <name> --scope <user|workspace> --workspace <directory>\n         --callback-port <1024-65535> --kiro-version <installed version>\n         --dry-run --json\nRepair:  --new-registration (explicit retry/replacement) or --callback-port\n\nRequires Node.js 22+ and Kiro IDE 1.1.70. User scope is the default.\nThe helper configures a public client; sign in and approve access in Kiro.");
@@ -1916,6 +1918,8 @@ async function main(args = process.argv.slice(2)) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
 export {
+  COMMANDS,
+  OPTIONS,
   main,
   runSetup
 };
