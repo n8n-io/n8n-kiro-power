@@ -46,10 +46,11 @@ are a separate Preview feature and are outside this release.
 For manual setup from this checkout:
 
 ```sh
-node skills/connect-n8n/scripts/setup.mjs configure --url https://YOUR-N8N-HOST --workspace /absolute/path/to/project
+node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL> --workspace <absolute path to your project>
 ```
 
-Use HTTPS except on loopback, and preserve any deployment base path. Settings
+Replace both angle-bracket values. Use HTTPS except on loopback, and preserve
+any deployment base path. Settings
 live in Kiro's native configuration; this power ships no root `mcp.json`.
 See the [setup guide](docs/setup-helper.md) for repair, removal, and migration.
 

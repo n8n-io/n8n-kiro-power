@@ -15,6 +15,14 @@ test('rejects remote HTTP, embedded credentials and URL secrets without echoing 
   }
 });
 
+test('rejects documented placeholder hosts instead of attempting a connection', () => {
+  for (const url of ['https://YOUR-N8N-HOST', 'https://your-n8n-host/mcp-server/http',
+    'https://your-instance.app.n8n.cloud', 'https://n8n.example.com/team']) {
+    assert.throws(() => normalizeEndpoint(url), { code: 'PLACEHOLDER_URL' });
+  }
+  assert.equal(normalizeEndpoint('https://your-n8n-host.example.org'), 'https://your-n8n-host.example.org/mcp-server/http');
+});
+
 test('discovers path-bearing issuers and registers exactly a public PKCE client', async t => {
   const f = await fixture(t, { base: '/team' });
   const discovery = await discover(f.endpoint);

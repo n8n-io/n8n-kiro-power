@@ -38,6 +38,11 @@ the Server URL from **n8n > Settings > Instance-level MCP > Connection details >
 Connect**. Require HTTPS except on loopback. An owner/admin must enable MCP;
 the helper does not change that setting.
 
+**Do not run any command below until you have that URL.** Every `--url` shown in
+this file and in the README is a placeholder standing in for the user's own
+host. Substitute it. If you have not been given a URL, ask for one; the helper
+rejects the documented placeholders rather than attempting a connection.
+
 Check `node --version`; Node.js 22+ must be available in Kiro's environment.
 If missing, explain that prerequisite. Do not install a runtime automatically.
 The helper detects Kiro's version and currently accepts only IDE 1.1.70. If
@@ -50,7 +55,7 @@ Do not assume `${PLUGIN_ROOT}` is set or that the user's project contains the
 power source. Run the helper; it needs no npm install:
 
 ```sh
-node "/absolute/installed/path/connect-n8n/scripts/setup.mjs" configure --url "https://YOUR-N8N-HOST" --workspace "/absolute/project/path" --json
+node "<absolute installed path>/connect-n8n/scripts/setup.mjs" configure --url "<the user's n8n URL>" --workspace "<absolute project path>" --json
 ```
 
 Default setup writes user settings at `~/.kiro/settings/mcp.json`, making the

@@ -4,6 +4,14 @@ import { fail, isObject, SetupError } from './errors.mjs';
 const MAX_RESPONSE_BYTES = 128 * 1024;
 export const SCOPES = ['workflow:read', 'workflow:write', 'workflow:execute', 'execution:read'];
 
+// Hostnames used as placeholders in this repository's examples. An agent that
+// copies a documented command without substituting the user's instance reaches
+// discovery and gets a generic network error, which reads as an outage rather
+// than a missing argument. Named exactly, so a real host cannot match.
+const PLACEHOLDER_HOSTS = new Set([
+  'your-n8n-host', 'your-instance.app.n8n.cloud', 'your-n8n-instance', 'n8n.example.com',
+]);
+
 export function safeUrl(value, origin) {
   let url;
   try { url = new URL(value); } catch { fail('INVALID_URL', 'Use an absolute n8n instance or MCP URL.'); }
@@ -20,6 +28,9 @@ export function safeUrl(value, origin) {
 
 export function normalizeEndpoint(value) {
   const url = safeUrl(value);
+  if (PLACEHOLDER_HOSTS.has(url.hostname)) {
+    fail('PLACEHOLDER_URL', 'That URL is the documentation placeholder, not an instance. Ask the user for their n8n URL, or read it from n8n Settings > Instance-level MCP > Connection details.');
+  }
   const base = url.pathname.replace(/\/+$/, '');
   url.pathname = base.endsWith('/mcp-server/http') ? base : `${base}/mcp-server/http`;
   return url.href;

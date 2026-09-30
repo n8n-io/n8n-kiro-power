@@ -36,6 +36,12 @@ function isObject(value) {
 import { createHash } from "node:crypto";
 var MAX_RESPONSE_BYTES = 128 * 1024;
 var SCOPES = ["workflow:read", "workflow:write", "workflow:execute", "execution:read"];
+var PLACEHOLDER_HOSTS = /* @__PURE__ */ new Set([
+  "your-n8n-host",
+  "your-instance.app.n8n.cloud",
+  "your-n8n-instance",
+  "n8n.example.com"
+]);
 function safeUrl(value, origin) {
   let url;
   try {
@@ -54,6 +60,9 @@ function safeUrl(value, origin) {
 }
 function normalizeEndpoint(value) {
   const url = safeUrl(value);
+  if (PLACEHOLDER_HOSTS.has(url.hostname)) {
+    fail("PLACEHOLDER_URL", "That URL is the documentation placeholder, not an instance. Ask the user for their n8n URL, or read it from n8n Settings > Instance-level MCP > Connection details.");
+  }
   const base = url.pathname.replace(/\/+$/, "");
   url.pathname = base.endsWith("/mcp-server/http") ? base : `${base}/mcp-server/http`;
   return url.href;

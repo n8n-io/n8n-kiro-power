@@ -10,7 +10,7 @@ gates live only in the [release checklist](release-checklist.md).
 Requires Node.js 22+ and Kiro IDE 1.1.70. From a checkout:
 
 ```sh
-node skills/connect-n8n/scripts/setup.mjs configure --url https://YOUR-N8N-HOST --workspace /absolute/path/to/project
+node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL> --workspace /absolute/path/to/project
 ```
 
 The installed connection skill resolves `scripts/setup.mjs` from its own installed
@@ -31,10 +31,10 @@ Registration metadata lives in `~/.kiro/n8n-power/connections.json` without toke
 Keep the same URL, optional `--name`, scope, and workspace on later commands:
 
 ```sh
-node skills/connect-n8n/scripts/setup.mjs doctor --url https://YOUR-N8N-HOST --workspace /absolute/path/to/project --json
-node skills/connect-n8n/scripts/setup.mjs configure --url https://YOUR-N8N-HOST --dry-run --json
-node skills/connect-n8n/scripts/setup.mjs repair --url https://YOUR-N8N-HOST --new-registration
-node skills/connect-n8n/scripts/setup.mjs remove --url https://YOUR-N8N-HOST
+node skills/connect-n8n/scripts/setup.mjs doctor --url <your n8n URL> --workspace /absolute/path/to/project --json
+node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL> --dry-run --json
+node skills/connect-n8n/scripts/setup.mjs repair --url <your n8n URL> --new-registration
+node skills/connect-n8n/scripts/setup.mjs remove --url <your n8n URL>
 ```
 
 Doctor and dry-run perform discovery but do not register clients or write files.
