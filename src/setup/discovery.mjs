@@ -4,13 +4,17 @@ import { fail, isObject, SetupError } from './errors.mjs';
 const MAX_RESPONSE_BYTES = 128 * 1024;
 export const SCOPES = ['workflow:read', 'workflow:write', 'workflow:execute', 'execution:read'];
 
-// Hostnames used as placeholders in this repository's examples. An agent that
-// copies a documented command without substituting the user's instance reaches
+// Hostnames this repository ships as placeholders. An agent that copies a
+// documented command without substituting the user's instance otherwise reaches
 // discovery and gets a generic network error, which reads as an outage rather
-// than a missing argument. Named exactly, so a real host cannot match.
-const PLACEHOLDER_HOSTS = new Set([
-  'your-n8n-host', 'your-instance.app.n8n.cloud', 'your-n8n-instance', 'n8n.example.com',
-]);
+// than a missing argument.
+//
+// Keep this to single labels that appear verbatim in our own examples. A
+// qualified placeholder is unsafe to list: n8n Cloud tenants choose their own
+// <name>.app.n8n.cloud subdomain, so a guess at a plausible-looking one can
+// reject a real instance. A single label can still collide with an internal
+// hostname, so the error says what was assumed rather than that the URL is wrong.
+const PLACEHOLDER_HOSTS = new Set(['your-n8n-host']);
 
 export function safeUrl(value, origin) {
   let url;
@@ -28,8 +32,9 @@ export function safeUrl(value, origin) {
 
 export function normalizeEndpoint(value) {
   const url = safeUrl(value);
-  if (PLACEHOLDER_HOSTS.has(url.hostname)) {
-    fail('PLACEHOLDER_URL', 'That URL is the documentation placeholder, not an instance. Ask the user for their n8n URL, or read it from n8n Settings > Instance-level MCP > Connection details.');
+  // A trailing dot is a valid fully qualified form of the same name.
+  if (PLACEHOLDER_HOSTS.has(url.hostname.replace(/\.$/, ''))) {
+    fail('PLACEHOLDER_URL', 'That host is the placeholder from this power\'s examples, so it was read as an unsubstituted command rather than an instance. Ask the user for their n8n URL, or read it from n8n Settings > Instance-level MCP > Connection details.');
   }
   const base = url.pathname.replace(/\/+$/, '');
   url.pathname = base.endsWith('/mcp-server/http') ? base : `${base}/mcp-server/http`;

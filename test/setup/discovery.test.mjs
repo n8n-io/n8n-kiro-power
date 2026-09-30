@@ -15,12 +15,17 @@ test('rejects remote HTTP, embedded credentials and URL secrets without echoing 
   }
 });
 
-test('rejects documented placeholder hosts instead of attempting a connection', () => {
-  for (const url of ['https://YOUR-N8N-HOST', 'https://your-n8n-host/mcp-server/http',
-    'https://your-instance.app.n8n.cloud', 'https://n8n.example.com/team']) {
+test('rejects the shipped placeholder host, including its fully qualified form', () => {
+  for (const url of ['https://YOUR-N8N-HOST', 'https://your-n8n-host/mcp-server/http', 'https://your-n8n-host./team']) {
     assert.throws(() => normalizeEndpoint(url), { code: 'PLACEHOLDER_URL' });
   }
+});
+
+test('does not reject real hosts that merely resemble the placeholder', () => {
+  // n8n Cloud tenants pick their own subdomain, so a plausible-looking guess must still resolve.
+  assert.equal(normalizeEndpoint('https://your-instance.app.n8n.cloud'), 'https://your-instance.app.n8n.cloud/mcp-server/http');
   assert.equal(normalizeEndpoint('https://your-n8n-host.example.org'), 'https://your-n8n-host.example.org/mcp-server/http');
+  assert.equal(normalizeEndpoint('https://n8n.example.com/team'), 'https://n8n.example.com/team/mcp-server/http');
 });
 
 test('discovers path-bearing issuers and registers exactly a public PKCE client', async t => {

@@ -47,13 +47,20 @@ are a separate Preview feature and are outside this release.
 For manual setup from this checkout:
 
 ```sh
-node skills/connect-n8n/scripts/setup.mjs configure --url <your n8n URL>
+node skills/connect-n8n/scripts/setup.mjs configure --url "<your n8n URL>"
 ```
 
 Replace the angle-bracket value. Use HTTPS except on loopback, and preserve any
-deployment base path. Add `--workspace <absolute project path>` only for
-workspace scope. Settings
-live in Kiro's native configuration; this power ships no root `mcp.json`.
+deployment base path. The default is a user-level connection shared across
+projects. For a project-only connection pass both flags, since `--workspace`
+alone still writes user settings:
+
+```sh
+node skills/connect-n8n/scripts/setup.mjs configure --url "<your n8n URL>" --scope workspace --workspace "<absolute project path>"
+```
+
+Settings live in Kiro's native configuration; this power ships no root
+`mcp.json`.
 See the [setup guide](docs/setup-helper.md) for repair, removal, and migration.
 
 ## Token fallback
