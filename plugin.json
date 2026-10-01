@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "n8n",
+  "version": "1.0.0",
+  "description": "Build, run, and debug n8n workflows using your workspace code and public-client OAuth. Workflow tools require n8n 2.34.0+. Setup supports Kiro IDE 1.1.70 only and requires Node.js 22+ and enabled n8n MCP access.",
+  "author": {
+    "name": "n8n",
+    "url": "https://n8n.io"
+  },
+  "keywords": [
+    "n8n",
+    "workflow",
+    "workflow automation",
+    "automation",
+    "integration",
+    "webhook",
+    "scheduled job",
+    "build a workflow"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://docs.n8n.io",
+  "repository": "https://github.com/n8n-io/n8n-kiro-power"
+}
