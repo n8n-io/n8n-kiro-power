@@ -1,0 +1,84 @@
+name: Sync shared skills
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-shared-skills
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.repository == 'n8n-io/n8n-kiro-power' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Resolve upstream revision
+        id: revision
+        run: |
+          previous=$(node --input-type=module -e 'import fs from "node:fs"; console.log(JSON.parse(fs.readFileSync("shared-skills.lock.json")).commit)')
+          latest=$(gh api repos/n8n-io/skills/commits/main --jq .sha)
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+      - name: Import and validate
+        if: steps.revision.outputs.previous != steps.revision.outputs.latest
+        env:
+          UPSTREAM_COMMIT: ${{ steps.revision.outputs.latest }}
+        run: |
+          npm ci --ignore-scripts
+          npm run skills:sync -- --commit "$UPSTREAM_COMMIT"
+          npm version patch --no-git-tag-version --ignore-scripts
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('plugin.json'));
+          manifest.version = JSON.parse(fs.readFileSync('package.json')).version;
+          fs.writeFileSync('plugin.json', JSON.stringify(manifest, null, 2) + '\n');
+          JS
+          npm run skills:check
+          npm run check
+      - name: Propose update in this repository
+        if: steps.revision.outputs.previous != steps.revision.outputs.latest
+        id: pr
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          branch: codex/sync-n8n-skills
+          add-paths: |
+            shared-skills.lock.json
+            skills/connect-n8n/references/n8n-skills/
+            plugin.json
+            package.json
+            package-lock.json
+          commit-message: 'chore: sync shared n8n skills'
+          title: 'chore: sync shared n8n skills'
+          draft: always-true
+          body: |
+            Updates the bundled skills, references and license from n8n-io/skills without editing their contents, and increments the power's patch version. OAuth setup and Kiro entry instructions remain owned by this repository.
+
+            [Upstream changes](https://github.com/n8n-io/skills/compare/${{ steps.revision.outputs.previous }}...${{ steps.revision.outputs.latest }})
+
+            Snapshot equality, package checks and local tests passed in the updater. The validation workflow is dispatched on this branch for manifest checks and the full Node/OS matrix. Review the guidance changes and verify affected Kiro behavior before merging; no live acceptance result is implied.
+      # GITHUB_TOKEN does not reliably start unattended PR checks. Dispatch the
+      # existing validation workflow explicitly on the proposed commit instead.
+      - name: Run PR validation
+        if: steps.pr.outputs.pull-request-number && steps.pr.outputs.pull-request-operation != 'closed'
+        run: gh workflow run validate-power.yml --ref codex/sync-n8n-skills

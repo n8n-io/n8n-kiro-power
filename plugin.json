@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "n8n",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Build, run, and debug n8n workflows using your workspace code and public-client OAuth. Workflow tools require n8n 2.34.0+. Setup supports Kiro IDE 1.1.70 only and requires Node.js 22+ and enabled n8n MCP access.",
   "author": {
     "name": "n8n",

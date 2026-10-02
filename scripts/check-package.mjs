@@ -3,6 +3,7 @@ import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { OPTIONS } from '../src/setup/cli.mjs';
 import { COMMANDS } from '../src/setup/setup.mjs';
+import { SNAPSHOT, localMarkdownLinks, readSnapshot, validateSnapshot } from './sync-skills.mjs';
 
 const plugin = JSON.parse(await readFile('plugin.json', 'utf8'));
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
@@ -10,6 +11,7 @@ assert.equal(plugin.version, pkg.version);
 await assert.rejects(access('mcp.json'), { code: 'ENOENT' });
 await access('skills/connect-n8n/scripts/setup.mjs');
 await access('skills/connect-n8n/scripts/THIRD-PARTY-NOTICES.txt');
+validateSnapshot(await readSnapshot(SNAPSHOT));
 for (const skill of ['connect-n8n', 'build-workflow', 'debug-execution']) {
   const text = await readFile(`skills/${skill}/SKILL.md`, 'utf8');
   assert.ok(text.startsWith(`---\nname: ${skill}\n`));
@@ -29,9 +31,8 @@ async function markdownFiles(directory) {
 async function checkMarkdown(directory) {
   for (const file of await markdownFiles(directory)) {
     const text = await readFile(file, 'utf8');
-    for (const [, target] of text.matchAll(/\]\(([^)]+)\)/g)) {
-      if (/^[a-z]+:/i.test(target) || target.startsWith('#')) continue;
-      await access(path.resolve(path.dirname(file), target.split('#')[0]));
+    for (const target of localMarkdownLinks(text)) {
+      await access(path.resolve(path.dirname(file), target));
     }
   }
 }

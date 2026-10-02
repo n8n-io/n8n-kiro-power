@@ -103,3 +103,41 @@ bundle includes `jsonc-parser` to preserve settings without an installation step
 for users. GitHub marks it as generated so reviews can focus on authored source.
 Tests use temporary directories and disposable loopback servers, not real n8n
 accounts. CI checks bundle reproducibility and Node 22/24 on macOS/Linux/Windows.
+
+### Shared skills
+
+`shared-skills.lock.json` pins the full commit in `n8n-io/skills`. Its `skills/`
+tree and license are copied byte-for-byte into
+`skills/connect-n8n/references/n8n-skills/`. All 14 skills and their references
+are bundled so cross-skill links work. Kiro loads only the three local entry
+skills directly; they read the shared router and task-specific files on demand.
+Upstream hooks and plugin runtimes are not installed or executed.
+
+Maintainers need Git and network access for these commands:
+
+```sh
+npm run skills:sync
+npm run skills:check
+npm run skills:sync -- --commit "<full upstream commit SHA>"
+```
+
+Sync replaces only the imported directory; the optional commit also updates the
+lock. Check compares every imported file against Git blobs at the locked commit.
+It is a separate CI job; `npm run check` validates references and tests locally
+without fetching upstream. Keep local changes in the Kiro entry skills; leave the
+imported files unchanged. Commit the lock and snapshot together. Revert that pair
+to roll back an update. No commands push to or modify `n8n-io/skills`.
+
+After merge to `main`, **Sync shared skills** runs weekly or through Run workflow.
+It opens or updates one draft PR on the bot-owned `codex/sync-n8n-skills` branch,
+increments the power's patch version, then explicitly dispatches **Validate
+power** there. It uses this repository's
+`GITHUB_TOKEN`; repository/organization settings must allow GitHub Actions to
+create pull requests. No extra token is required, and updates do not auto-merge.
+The bot may rebuild its branch, so make Kiro changes in separate branches.
+
+Review upstream changes and test affected Kiro behavior before merging updates.
+The shared references mention other agents' Skill tools and hooks; the connection
+skill supplies Kiro's file-loading instructions. Snapshot and unit tests verify
+packaging, not agent behavior. Clean installed-power build/run/debug acceptance
+for this adapter remains a release gate in the existing checklist.

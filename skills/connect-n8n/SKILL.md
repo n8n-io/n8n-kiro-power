@@ -30,6 +30,33 @@ A settings file, browser success page or tool count does not prove a successful
 MCP read. Missing tools do not prove the instance is empty. If the read succeeds,
 continue the task on that same connection; do not repeatedly reconnect.
 
+## Load shared workflow guidance in Kiro
+
+For building or debugging, the entry skill loads the bundled shared router and
+its relevant capability skills after this preflight. They live under
+`references/n8n-skills/skills/` relative to this installed skill. Resolve a shared
+skill name to `<name>/SKILL.md` there, and its references relative to that file.
+
+When shared guidance says to invoke a Skill tool, read that local `SKILL.md` with
+Kiro's file-reading capability. These are bundled references, not additional
+installed Kiro skills. No upstream SessionStart or PreToolUse hooks run here;
+load the router explicitly and follow its routing before the relevant operation.
+Read references on demand, not the entire collection on every task. Report only
+skills actually read in `skillsUsed`, and only when the tool schema supports it.
+
+Use this power's update process for shared-skill updates. Do not edit or run
+`git pull` inside the installed snapshot. If a bundled file is missing, report an
+incomplete installation. Live tool schemas determine available names and fields.
+If a required nested schema is missing, report the Kiro limitation below.
+
+Before every test, inspect the actual pin map and the unpinned nodes: unpinned
+commands, file operations, Code I/O and sub-workflows can have real effects.
+Obtain authorization for their effects unless already authorized. Report which
+nodes were simulated; a passing simulated test does not verify those integrations.
+Publish only when the user authorized publication of that workflow. Check live
+effects before changing workflow-level settings on an already published workflow,
+since they can reactivate it. These checks apply alongside the shared guidance.
+
 ## Set up a connection
 
 Obtain the instance URL from the user or a verified existing configuration. Do

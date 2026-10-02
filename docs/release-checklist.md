@@ -41,6 +41,9 @@ passwords, and private payloads out of evidence.
 - [ ] **Workflow acceptance:** create a draft, run it, introduce wrong output
       and an execution error, inspect the relevant runs, repair, and rerun through
       native MCP without an externally supplied schema. Confirm final outputs.
+      For the shared-skills adapter, confirm Kiro reads the bundled router and
+      relevant capability/reference files without relying on another agent's
+      Skill tool or session hooks; repeat this on a clean power installation.
 - [ ] **Access and effects:** respect a read-only grant and unavailable workflows;
       distinguish simulated data from real integrations and obtain authorization
       for actual external effects. Do not publish a workflow merely to test it.
