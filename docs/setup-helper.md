@@ -138,6 +138,8 @@ power** there. It uses this repository's
 `GITHUB_TOKEN`; repository/organization settings must allow GitHub Actions to
 create pull requests. No extra token is required, and updates do not auto-merge.
 Upstream commits with no changes to the imported files do not create update PRs.
+If upstream reverts a pending update so its files match `main`, the obsolete bot
+PR is closed on the next run.
 The bot may rebuild its branch, so make Kiro changes in separate branches.
 
 Review upstream changes and test affected Kiro behavior before merging updates.

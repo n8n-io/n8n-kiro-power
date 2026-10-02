@@ -53,6 +53,9 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${result.changed}\n`);
           console.log(JSON.stringify(result));
           JS
+      - name: Keep the existing pin when imported files are unchanged
+        if: steps.snapshot.outputs.changed == '0'
+        run: git restore -- shared-skills.lock.json
       - name: Version and validate changed skills
         if: steps.snapshot.outputs.changed > 0
         run: |
@@ -66,8 +69,8 @@ jobs:
           JS
           npm run skills:check
           npm run check
-      - name: Propose update in this repository
-        if: steps.snapshot.outputs.changed > 0
+      # Run even without changes so an obsolete bot proposal is closed.
+      - name: Reconcile update PR in this repository
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:

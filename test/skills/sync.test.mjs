@@ -114,6 +114,29 @@ test('linked lock files are rejected before fetching or overwriting the target',
   assert.deepEqual(await readFile(target), before);
 });
 
+test('linked snapshot files and parent directories are rejected without changing their targets', async t => {
+  const root = await fixture(t);
+  await syncSkills({ root, fetch: async () => sample() });
+  const destination = path.join(root, SNAPSHOT);
+  const license = path.join(destination, 'LICENSE');
+  const target = path.join(root, 'original-license');
+  await rename(license, target);
+  await symlink(target, license, 'file');
+  const before = await readFile(target);
+  await assert.rejects(readSnapshot(destination), /ordinary files, not links/);
+  await assert.rejects(syncSkills({ root, fetch: async () => sample() }), /ordinary files, not links/);
+  assert.deepEqual(await readFile(target), before);
+
+  await rm(license);
+  await rename(target, license);
+  const parent = path.dirname(destination);
+  const original = path.join(root, 'original-references');
+  await rename(parent, original);
+  await symlink(original, parent, process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(syncSkills({ root, fetch: async () => { throw new Error('must not fetch'); } }), /ordinary directory/);
+  assert.deepEqual(await readSnapshot(path.join(original, path.basename(destination))), sample());
+});
+
 test('a revision with identical content reports zero changes for the updater', async t => {
   const root = await fixture(t);
   await syncSkills({ root, fetch: async () => sample() });
