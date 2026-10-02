@@ -123,6 +123,9 @@ npm run skills:sync -- --commit "<full upstream commit SHA>"
 
 Sync replaces only the imported directory; the optional commit also updates the
 lock. Check compares every imported file against Git blobs at the locked commit.
+Executable or linked upstream entries stop the import for review instead of
+silently changing file modes. A failed lock replacement rolls back the snapshot;
+after an interrupted process, rerun sync to restore the atomically locked commit.
 It is a separate CI job; `npm run check` validates references and tests locally
 without fetching upstream. Keep local changes in the Kiro entry skills; leave the
 imported files unchanged. Commit the lock and snapshot together. Revert that pair
@@ -134,6 +137,7 @@ increments the power's patch version, then explicitly dispatches **Validate
 power** there. It uses this repository's
 `GITHUB_TOKEN`; repository/organization settings must allow GitHub Actions to
 create pull requests. No extra token is required, and updates do not auto-merge.
+Upstream commits with no changes to the imported files do not create update PRs.
 The bot may rebuild its branch, so make Kiro changes in separate branches.
 
 Review upstream changes and test affected Kiro behavior before merging updates.

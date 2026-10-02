@@ -20,7 +20,7 @@ function validateCommit(commit) {
 export async function fetchSnapshot(commit, repository = UPSTREAM) {
   validateCommit(commit);
   const directory = await mkdtemp(path.join(tmpdir(), 'n8n-shared-skills-'));
-  const git = async (...args) => (await exec('git', args, {
+  const git = async (...args) => (await exec('git', ['-c', 'gc.auto=0', '-c', 'maintenance.auto=false', ...args], {
     cwd: directory, encoding: 'buffer', maxBuffer: 8 * 1024 * 1024, timeout: 60000,
   })).stdout;
   try {
@@ -30,7 +30,8 @@ export async function fetchSnapshot(commit, repository = UPSTREAM) {
     const files = new Map();
     for (const record of tree.split('\0').filter(Boolean)) {
       const [, mode, type, file] = /^(\d+) (\w+) [a-f0-9]+\t([\s\S]+)$/.exec(record) ?? [];
-      assert.ok(type === 'blob' && /^100(644|755)$/.test(mode), `Unsupported upstream entry: ${record}`);
+      // This package imports reference data, not executable skill runtimes.
+      assert.ok(type === 'blob' && mode === '100644', `Executable or linked upstream entry requires review: ${record}`);
       assert.ok(!/[\\\x00-\x1f]/.test(file) && !file.split('/').some(p => p === '.' || p === '..'), `Unsafe upstream path: ${file}`);
       files.set(file, await git('show', `${commit}:${file}`));
     }
@@ -90,9 +91,10 @@ export function validateSnapshot(files) {
   return names.size;
 }
 
-export async function syncSkills({ root = process.cwd(), check = false, commit, fetch = fetchSnapshot } = {}) {
+export async function syncSkills({ root = process.cwd(), check = false, commit, fetch = fetchSnapshot, renameFile = rename } = {}) {
   assert.ok(!(check && commit), '--check verifies the lock; it cannot update --commit.');
   const lockPath = path.join(root, LOCK);
+  assert.ok((await lstat(lockPath)).isFile(), 'The lock must be an ordinary file, not a link.');
   const lock = JSON.parse(await readFile(lockPath, 'utf8'));
   assert.equal(lock.repository, UPSTREAM, 'Only n8n-io/skills is supported.');
   validateCommit(lock.commit);
@@ -112,28 +114,40 @@ export async function syncSkills({ root = process.cwd(), check = false, commit, 
     .filter(file => !expected.get(file)?.equals(current.get(file) ?? Buffer.alloc(0)) || !current.has(file)).sort();
   if (check) {
     assert.equal(changed.length, 0, `Shared skills differ from ${revision}. Run npm run skills:sync.\n${changed.join('\n')}`);
-  } else if (changed.length) {
+  } else if (changed.length || revision !== lock.commit) {
     await mkdir(path.dirname(destination), { recursive: true });
     const staging = await mkdtemp(path.join(path.dirname(destination), '.n8n-skills-'));
-    const backup = staging + '.previous';
+    const replacement = path.join(staging, 'next');
+    const backup = path.join(staging, 'previous');
     let moved = false;
+    let installed = false;
+    let committed = false;
     try {
-      for (const [file, bytes] of expected) {
-        const target = path.join(staging, file);
-        await mkdir(path.dirname(target), { recursive: true });
-        await writeFile(target, bytes);
+      if (revision !== lock.commit) {
+        await writeFile(path.join(staging, LOCK), JSON.stringify({ repository: UPSTREAM, commit: revision }, null, 2) + '\n');
       }
-      try { await rename(destination, backup); moved = true; }
-      catch (error) { if (error.code !== 'ENOENT') throw error; }
-      try { await rename(staging, destination); }
-      catch (error) { if (moved) await rename(backup, destination); throw error; }
-      if (moved) await rm(backup, { recursive: true });
+      if (changed.length) {
+        for (const [file, bytes] of expected) {
+          const target = path.join(replacement, file);
+          await mkdir(path.dirname(target), { recursive: true });
+          await writeFile(target, bytes);
+        }
+        try { await renameFile(destination, backup); moved = true; }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+        await renameFile(replacement, destination);
+        installed = true;
+      }
+      if (revision !== lock.commit) await renameFile(path.join(staging, LOCK), lockPath);
+      committed = true;
+    } catch (error) {
+      if (installed) await rm(destination, { recursive: true });
+      if (moved) { await renameFile(backup, destination); moved = false; }
+      throw error;
     } finally {
-      await rm(staging, { recursive: true, force: true });
+      // Retain the backup if restoring it failed. After a process interruption,
+      // rerunning sync restores the commit from the atomically replaced lock.
+      if (!moved || committed) await rm(staging, { recursive: true, force: true });
     }
-  }
-  if (!check && revision !== lock.commit) {
-    await writeFile(lockPath, JSON.stringify({ repository: UPSTREAM, commit: revision }, null, 2) + '\n');
   }
   return { commit: revision, skills, files: expected.size, changed: changed.length };
 }

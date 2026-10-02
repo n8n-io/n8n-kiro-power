@@ -41,12 +41,17 @@ When shared guidance says to invoke a Skill tool, read that local `SKILL.md` wit
 Kiro's file-reading capability. These are bundled references, not additional
 installed Kiro skills. No upstream SessionStart or PreToolUse hooks run here;
 load the router explicitly and follow its routing before the relevant operation.
+The read-only connection probe above precedes that loading; the shared rule about
+loading skills before MCP calls applies to subsequent workflow operations here.
 Read references on demand, not the entire collection on every task. Report only
 skills actually read in `skillsUsed`, and only when the tool schema supports it.
 
 Use this power's update process for shared-skill updates. Do not edit or run
 `git pull` inside the installed snapshot. If a bundled file is missing, report an
-incomplete installation. Live tool schemas determine available names and fields.
+incomplete installation. References to a separate skills plugin or its README's
+Drift section mean this power's version and pinned snapshot in Kiro; do not ask
+the user to install/update another plugin or look for that unbundled README.
+Live tool schemas determine available names and fields.
 If a required nested schema is missing, report the Kiro limitation below.
 
 Before every test, inspect the actual pin map and the unpinned nodes: unpinned

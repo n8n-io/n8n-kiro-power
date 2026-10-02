@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -85,6 +85,43 @@ test('rejects floating revisions, alternate repositories and update during check
   await assert.rejects(syncSkills({ root, fetch }), /Only n8n-io\/skills/);
 });
 
+test('failed lock replacement rolls back the snapshot and preserves the old pin', async t => {
+  const root = await fixture(t);
+  await syncSkills({ root, fetch: async () => sample() });
+  const lockPath = path.join(root, 'shared-skills.lock.json');
+  const before = await readFile(lockPath);
+  const changed = sample();
+  changed.set('LICENSE', Buffer.from('new license'));
+  await assert.rejects(syncSkills({
+    root, commit: 'b'.repeat(40), fetch: async () => changed,
+    renameFile: async (from, to) => {
+      if (to === lockPath) throw new Error('lock replacement failed');
+      await rename(from, to);
+    },
+  }), /lock replacement failed/);
+  assert.deepEqual(await readSnapshot(path.join(root, SNAPSHOT)), sample());
+  assert.deepEqual(await readFile(lockPath), before);
+});
+
+test('linked lock files are rejected before fetching or overwriting the target', async t => {
+  const root = await fixture(t);
+  const lockPath = path.join(root, 'shared-skills.lock.json');
+  const target = path.join(root, 'original-lock.json');
+  await rename(lockPath, target);
+  await symlink(target, lockPath, 'file');
+  const before = await readFile(target);
+  await assert.rejects(syncSkills({ root, commit: 'b'.repeat(40), fetch: async () => { throw new Error('must not fetch'); } }), /ordinary file/);
+  assert.deepEqual(await readFile(target), before);
+});
+
+test('a revision with identical content reports zero changes for the updater', async t => {
+  const root = await fixture(t);
+  await syncSkills({ root, fetch: async () => sample() });
+  const result = await syncSkills({ root, commit: 'b'.repeat(40), fetch: async () => sample() });
+  assert.equal(result.changed, 0);
+  assert.deepEqual(await readSnapshot(path.join(root, SNAPSHOT)), sample());
+});
+
 test('validation checks routed skills and local references, excluding Markdown examples', () => {
   const files = sample();
   const file = 'skills/n8n-debugging-official/SKILL.md';
@@ -100,7 +137,7 @@ test('validation checks routed skills and local references, excluding Markdown e
 
 test('fetch reads the exact commit as Git blobs and excludes non-skill runtime files', async t => {
   const root = await fixture(t);
-  const git = async (...args) => (await promisify(execFile)('git', args, { cwd: root })).stdout.trim();
+  const git = async (...args) => (await promisify(execFile)('git', ['-c', 'gc.auto=0', '-c', 'maintenance.auto=false', ...args], { cwd: root })).stdout.trim();
   await git('init', '--quiet');
   await git('config', 'core.autocrlf', 'false');
   for (const [file, bytes] of sample()) {
@@ -113,4 +150,7 @@ test('fetch reads the exact commit as Git blobs and excludes non-skill runtime f
   const commit = await git('rev-parse', 'HEAD');
   await writeFile(path.join(root, 'LICENSE'), 'uncommitted change');
   assert.deepEqual(await fetchSnapshot(commit, root), sample());
+  await git('update-index', '--chmod=+x', 'skills/n8n-debugging-official/references/example.json');
+  await git('-c', 'user.name=Test', '-c', 'user.email=test@example.com', 'commit', '--quiet', '-m', 'executable fixture');
+  await assert.rejects(fetchSnapshot(await git('rev-parse', 'HEAD'), root), /Executable or linked/);
 });

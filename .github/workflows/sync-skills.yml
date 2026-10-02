@@ -40,13 +40,23 @@ jobs:
           latest=$(gh api repos/n8n-io/skills/commits/main --jq .sha)
           echo "previous=$previous" >> "$GITHUB_OUTPUT"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
-      - name: Import and validate
+      - name: Import candidate snapshot
+        id: snapshot
         if: steps.revision.outputs.previous != steps.revision.outputs.latest
         env:
           UPSTREAM_COMMIT: ${{ steps.revision.outputs.latest }}
         run: |
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import { syncSkills } from './scripts/sync-skills.mjs';
+          const result = await syncSkills({ commit: process.env.UPSTREAM_COMMIT });
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `changed=${result.changed}\n`);
+          console.log(JSON.stringify(result));
+          JS
+      - name: Version and validate changed skills
+        if: steps.snapshot.outputs.changed > 0
+        run: |
           npm ci --ignore-scripts
-          npm run skills:sync -- --commit "$UPSTREAM_COMMIT"
           npm version patch --no-git-tag-version --ignore-scripts
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
@@ -57,7 +67,7 @@ jobs:
           npm run skills:check
           npm run check
       - name: Propose update in this repository
-        if: steps.revision.outputs.previous != steps.revision.outputs.latest
+        if: steps.snapshot.outputs.changed > 0
         id: pr
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
