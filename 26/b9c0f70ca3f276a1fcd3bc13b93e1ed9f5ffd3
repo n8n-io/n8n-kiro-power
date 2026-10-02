@@ -1,0 +1,50 @@
+plugin.json
+  s_99430064d5fc8e::t_c7e2cf59383538 4
+skills/build-workflow/SKILL.md
+  s_99430064d5fc8e::t_ad551ca885cb26 3,10-46
+package.json
+  s_99430064d5fc8e::t_ce41f74125e571 12-14
+  s_99430064d5fc8e::t_c7e2cf59383538 3,6-8,17-20
+.github/workflows/validate-power.yml
+  s_99430064d5fc8e::t_d9f4a2b8c1ee11 34-45
+docs/setup-helper.md
+  s_99430064d5fc8e::t_d9f4a2b8c1ee11 106-132,135-143
+  s_99430064d5fc8e::t_447d2b649d4672 133-134
+docs/release-checklist.md
+  s_99430064d5fc8e::t_d9f4a2b8c1ee11 44-46
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_ad551ca885cb26 33-59
+.github/workflows/sync-skills.yml
+  s_99430064d5fc8e::t_d9f4a2b8c1ee11 1-49,57-67,71-74,76-84
+  s_99430064d5fc8e::t_447d2b649d4672 50-56,68-70,75
+scripts/check-package.mjs
+  s_99430064d5fc8e::t_ce41f74125e571 6,14,34-35
+scripts/sync-skills.mjs
+  s_99430064d5fc8e::t_ce41f74125e571 1-149
+README.md
+  s_99430064d5fc8e::t_d9f4a2b8c1ee11 94-99
+.gitattributes
+  s_99430064d5fc8e::t_ce41f74125e571 3
+skills/debug-execution/SKILL.md
+  s_99430064d5fc8e::t_ad551ca885cb26 3,10,12-13,15,17-25,27-30,32,34-36,38-41,43-46
+shared-skills.lock.json
+  s_99430064d5fc8e::t_ce41f74125e571 1-4
+test/skills/sync.test.mjs
+  s_99430064d5fc8e::t_beb066d843b047 1-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "26b9c0f70ca3f276a1fcd3bc13b93e1ed9f5ffd3",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
