@@ -21,7 +21,7 @@ Cross-origin identity providers and redirects are unsupported.
 
 Check `node --version`: Node.js 22+ must be available in Kiro's environment.
 Explain a missing runtime; do not install one automatically. Setup currently
-accepts only Kiro IDE 1.1.70. If detection fails, check Help > About and pass the
+accepts Kiro IDE 1.1.70 and 1.2.4. If detection fails, check Help > About and pass the
 actual version with `--kiro-version`; never supply an older version to bypass it.
 
 For an installed power, resolve `scripts/setup.mjs` relative to the installed
@@ -74,7 +74,7 @@ the user to **Kiro > MCP Servers > Authenticate**. Kiro owns sign-in, consent,
 PKCE and tokens. Never request passwords, copy authorization codes, or implement
 login/consent through REST.
 
-Kiro 1.1.70 may request all advertised scopes despite configured scopes. On the
+Kiro may request all advertised scopes despite configured scopes. On the
 n8n consent page, choose **Custom** and review workflow read/write/execute plus
 execution read for build/run/debug. Respect a read-only selection and request
 more access only when the task needs it. The helper does not constrain the

@@ -1,7 +1,7 @@
 ---
 name: connect-n8n
 description: "Set up and verify the n8n MCP connection before using n8n tools. Run on the first turn touching n8n, or when tools are missing, OAuth fails, a request times out, or the user asks to connect a new instance. Uses a bundled public-client OAuth setup helper and Kiro's native MCP settings."
-compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; the live public-OAuth test used local n8n 2.41.0 development.
+compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70 or 1.2.4, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; the live public-OAuth test used local n8n 2.41.0 development.
 metadata:
   author: n8n
   version: "1.0.0"

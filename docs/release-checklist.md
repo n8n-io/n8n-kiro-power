@@ -4,7 +4,8 @@
 The [setup guide](setup-helper.md) describes the implemented commands.
 The package contains skills and a bundled helper; it ships no root `mcp.json`.
 
-Setup currently supports local Kiro IDE 1.1.70 with Node.js 22+. n8n 2.34.0 is
+Setup accepts local Kiro IDE 1.1.70 and 1.2.4 with Node.js 22+;
+version-specific live validation is recorded below. n8n 2.34.0 is
 the workflow tool-name floor, not a verified public-OAuth minimum.
 
 ## Recorded evidence
@@ -12,7 +13,7 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | Check | Evidence and limits |
 | --- | --- |
 | Helper regression tests | On 2026-09-29, all 43 tests passed locally. Seven new regression cases failed against `20f9df6` and pass with the fixes. |
-| Current candidate checks | On 2026-10-02, `27bd3db` passed all 56 tests, bundle reproducibility and package checks on macOS / Node 24.19.0. The loopback-server tests required an unsandboxed run. The snapshot check confirmed 14 skills / 66 files with no changes against the pinned upstream commit. |
+| Current candidate checks | On 2026-10-08, the helper with Kiro 1.2.4 support passed all 64 tests, bundle reproducibility and package checks on macOS / Node 24.19.0. A dry run against local n8n successfully detected the installed 1.2.4 version and prepared a public-client connection without writing settings or registering a client. |
 | Cross-platform CI | `20f9df6` passed Node 22/24 on macOS, Linux, and Windows plus manifest validation. Check the candidate commit's CI before release; helper tests do not establish IDE support on every OS. |
 | New helper and OAuth | On 2026-09-28, Kiro 1.1.70 completed fresh S256 PKCE consent with a helper-created public client, discovered 23 tools, and called `search_workflows` successfully. Target: isolated local n8n 2.41.0 development without the Basic-authentication patch; disposable workspace configuration. |
 | Earlier public-OAuth proof | Synthetic workflow creation/execution, refresh, revocation, and reconnect passed locally before the final helper was packaged. This is not installed-package acceptance. |
@@ -21,9 +22,9 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | Installed reference reads | A fresh folder import of `27bd3db` on macOS / Kiro 1.2.4 also exposed exactly three entry skills. Kiro read the installed router, lifecycle, expressions and node-configuration guides with its file tool. A stalled shell lookup was stopped and the discovered installed path supplied explicitly; this verifies file accessibility, not automatic path discovery or a live workflow operation. |
 | Follow-up reference reuse | In the same planning-only session, an incorrect-output follow-up loaded only `n8n-debugging-official`, reused the earlier guidance and proposed the missing discount calculation. This is file-loading evidence, not a native MCP execution or repair test. |
 | Compaction attempt | On Kiro 1.2.4, `/compact` produced an ordinary assistant summary; the context meter increased and no compaction event was visible. Reloading missing guidance after actual compaction is still unverified. |
-| Current Kiro version blocker | The installed IDE is now 1.2.4. The candidate helper detects that version and rejects it with `KIRO_VERSION`; explicitly passing `--kiro-version 1.2.4` does not change the result. Public-OAuth onboarding and native build/run/debug acceptance on this version remain blocked. |
+| Kiro 1.2.4 compatibility | The helper now accepts the installed 1.2.4 version as well as 1.1.70, using the same public-client configuration supported by its installed OAuth provider. Regression tests cover detected-version setup and reuse of a registration after upgrading; unknown and prerelease versions remain rejected. Native OAuth/workflow acceptance is still pending. |
 | Imported guidance audit | All 13 content comments on PR #2 were confirmed on 2026-10-02: eight by running the exact examples or n8n 2.41.0's built validators/execution engine, and five by checking the pinned text and reference paths. On 2026-10-08, local corrections fixed the examples and guidance without modifying `n8n-io/skills`; regression tests execute both bundled validators and the per-item Code example. Sync now verifies the locked upstream files plus the reviewed patch and rejects conflicting updates. |
-| Acceptance retry | On 2026-10-08, the installed Kiro version was still 1.2.4 and computer control reported the Mac locked. No new installed-power acceptance result is claimed; the version restriction and native workflow test remain open. |
+| Acceptance retry | On 2026-10-08, desktop access was restored, but the local n8n browser session required sign-in. Kiro's file picker also kept Open disabled during the automation attempt, so the new test workspace could not be opened. No new native OAuth or workflow acceptance result is claimed; those tests remain open. |
 
 The detailed September 25–28 investigation and test records are preserved at
 [the reviewed commit](https://github.com/n8n-io/n8n-kiro-power/tree/20f9df620045dd0418e78f52459a5e2a413f6013/docs).

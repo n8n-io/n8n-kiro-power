@@ -10,7 +10,7 @@ import { atomicWrite, editConfig, fingerprint, parseConfig, parseState, readSnap
 // check import this list so a documented command cannot diverge from what runs.
 export const COMMANDS = ['configure', 'doctor', 'repair', 'remove'];
 
-const consentNote = 'Kiro 1.1.70 may request all permissions. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.';
+const consentNote = 'Kiro may request all advertised permissions despite configured scopes. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.';
 
 async function locations(options, home) {
   const root = await realpath(home);

@@ -12,7 +12,7 @@ still require acceptance testing. See the
 
 ## Requirements
 
-- **Kiro IDE 1.1.70**, in a local session. Setup currently accepts this version only.
+- **Kiro IDE 1.1.70 or 1.2.4**, in a local session; see the release checklist for live validation.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
   version floor; live testing used n8n 2.41.0 development.
@@ -28,7 +28,7 @@ are a separate Preview feature and are outside this release.
 
 ## Install and connect
 
-1. For the draft, check out PR #1's `initial-power` branch. In **Kiro > Powers >
+1. For this draft, check out PR #2's `codex/shared-skills-sync` branch. In **Kiro > Powers >
    Add Custom Power > Import power from a folder**, select the directory
    containing `plugin.json`. GitHub installation from the repository URL becomes
    the release path after the package is merged to `main`.
@@ -38,7 +38,7 @@ are a separate Preview feature and are outside this release.
 3. The helper creates a native user-level MCP connection shared across projects.
    Request workspace scope to configure only the current project.
 4. Under **Kiro > MCP Servers**, select the named server and **Authenticate**.
-   Sign in to n8n and review consent. Kiro 1.1.70 may request all advertised
+   Sign in to n8n and review consent. Kiro may request all advertised
    permissions: choose **Custom**, then workflow read/write/execute and execution
    read for basic workflow tasks. Use narrower grants for read-only tasks.
 5. Ask Kiro to search for a workflow. A successful read verifies the connection;

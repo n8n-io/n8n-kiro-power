@@ -172,6 +172,7 @@ async function register(discovery, callbackUri2, options = {}) {
 }
 
 // src/setup/kiro.mjs
+var SUPPORTED_KIRO_VERSIONS = ["1.1.70", "1.2.4"];
 async function detectKiroVersion() {
   if (process.platform === "darwin") {
     try {
@@ -188,8 +189,8 @@ async function detectKiroVersion() {
   }
 }
 function requireSupportedKiro(version) {
-  if (version !== "1.1.70") {
-    fail("KIRO_VERSION", "The current helper is validated for Kiro IDE 1.1.70 only. Check Help > About; supply --kiro-version 1.1.70 only if that is the installed version.");
+  if (!SUPPORTED_KIRO_VERSIONS.includes(version)) {
+    fail("KIRO_VERSION", `Setup supports Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(" or ")}. Check Help > About and supply --kiro-version only with the actual installed version.`);
   }
 }
 async function availablePort(port = 0) {
@@ -1724,7 +1725,7 @@ async function atomicWrite(file, original, next) {
 
 // src/setup/setup.mjs
 var COMMANDS = ["configure", "doctor", "repair", "remove"];
-var consentNote = "Kiro 1.1.70 may request all permissions. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.";
+var consentNote = "Kiro may request all advertised permissions despite configured scopes. In n8n consent, select Custom and review workflow read/write/execute and execution read. The helper does not grant access.";
 async function locations(options, home) {
   const root = await realpath(home);
   const workspace = options.workspace ? await realpath(path2.resolve(options.workspace)) : null;
@@ -1885,7 +1886,15 @@ async function main(args = process.argv.slice(2)) {
     const { values, positionals } = parseArgs({ args, allowPositionals: true, options: OPTIONS });
     json = Boolean(values.json);
     if (values.help) {
-      console.log("Usage: node setup.mjs <configure|doctor|repair|remove> --url <n8n URL>\n\nOptions: --name <name> --scope <user|workspace> --workspace <directory>\n         --callback-port <1024-65535> --kiro-version <installed version>\n         --dry-run --json\nRepair:  --new-registration (explicit retry/replacement) or --callback-port\n\nRequires Node.js 22+ and Kiro IDE 1.1.70. User scope is the default.\nThe helper configures a public client; sign in and approve access in Kiro.");
+      console.log(`Usage: node setup.mjs <configure|doctor|repair|remove> --url <n8n URL>
+
+Options: --name <name> --scope <user|workspace> --workspace <directory>
+         --callback-port <1024-65535> --kiro-version <installed version>
+         --dry-run --json
+Repair:  --new-registration (explicit retry/replacement) or --callback-port
+
+Requires Node.js 22+ and Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(" or ")}. User scope is the default.
+The helper configures a public client; sign in and approve access in Kiro.`);
       return;
     }
     if (positionals.length > 1) throw new SetupError("ARGUMENT", "Supply one command. Use --help for usage.");
