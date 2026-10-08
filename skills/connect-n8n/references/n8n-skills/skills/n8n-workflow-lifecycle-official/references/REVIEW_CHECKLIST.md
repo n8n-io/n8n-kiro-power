@@ -73,7 +73,7 @@ Before walking the per-domain list:
 
 ### Set node antipattern
 
-- [ ] **Set node feeding only 0 or 1 downstream consumer.** Most common antipattern in the pack. Delete + inline the expression at the consumer. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
+- [ ] **Set node only preparing expressions for 0 or 1 downstream consumer.** Inline when this preserves behavior; retain field whitelists (Keep Only Set), sub-workflow return contracts, and required transformations. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
 - [ ] **Set node before a Data Table Insert/Update mapping fields to schema.** Map directly in the Data Table node's per-column expression slots. → [n8n-data-tables-official strong defaults](../../n8n-data-tables-official/SKILL.md)
 - [ ] **Set node building an email/Slack body.** Build the body inline in the comms node's body field with an expression. → [COMMS_NODES.md](../../n8n-node-configuration-official/references/COMMS_NODES.md)
 - [ ] **Multiple consecutive Set nodes each defining one field.** Collapse, or eliminate. → [n8n-expressions-official](../../n8n-expressions-official/SKILL.md)

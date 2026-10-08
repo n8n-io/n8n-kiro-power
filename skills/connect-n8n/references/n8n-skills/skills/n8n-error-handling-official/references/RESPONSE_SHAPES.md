@@ -101,6 +101,11 @@ For 400/`validation_error`, include per-field details. Real example produced by 
 {
   "error": "validation_error",
   "message": "Validation failed (3 issues):\n• name: Missing required field \"name\"\n• email: \"not-an-email\" is not valid - Contact email address\n• plan: \"premium\" is not an allowed value. Must be one of: starter, pro, enterprise - Subscription plan",
+  "details": {
+    "name": "Missing required field \"name\"",
+    "email": "\"not-an-email\" is not valid",
+    "plan": "\"premium\" is not an allowed value. Must be one of: starter, pro, enterprise"
+  },
   "request_schema": { /* the JSON Schema, echoed back for caller-side self-correction */ }
 }
 ```

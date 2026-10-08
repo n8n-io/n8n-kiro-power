@@ -91,8 +91,9 @@ rotation. The OAuth helper does not manage tokens or adopt this entry.
 - `build-workflow` uses workspace context to create and test workflows.
 - `debug-execution` investigates execution data and applies grounded repairs.
 
-Workflow guidance comes from an unchanged, pinned copy of
-[n8n-io/skills](https://github.com/n8n-io/skills), bundled with the power. The three
+Workflow guidance comes from a pinned copy of
+[n8n-io/skills](https://github.com/n8n-io/skills), bundled with the power and
+[reviewed local corrections](patches/shared-skills.patch). The three
 Kiro entry skills load the relevant shared guidance on demand; there is no second
 plugin to install. This repository owns OAuth setup and the Kiro adaptations.
 See [shared-skill maintenance](docs/setup-helper.md#shared-skills) for updates.

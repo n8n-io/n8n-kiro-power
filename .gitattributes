@@ -1,3 +1,5 @@
 * text=auto eol=lf
 skills/connect-n8n/scripts/setup.mjs linguist-generated=true
 skills/connect-n8n/references/n8n-skills/** -text linguist-generated=true
+# Unified diff context preserves upstream whitespace.
+patches/*.patch -text -whitespace

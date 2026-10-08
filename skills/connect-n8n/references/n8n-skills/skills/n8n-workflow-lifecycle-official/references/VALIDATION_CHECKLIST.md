@@ -16,7 +16,7 @@ Walk the workflow with these questions in mind. These are patterns that recur ac
 
 **Set nodes:**
 - For each Set node, count how many downstream nodes reference its output fields.
-- If only 0 or 1 downstream consumer references each field, **delete the Set node and inline the expression at the consumer**. The most common antipattern (`n8n-expressions-official` non-negotiable #2).
+- If a Set node only prepares expressions for 0 or 1 downstream consumer, inline them where used when this preserves behavior. **Keep Set nodes that whitelist fields (Keep Only Set), shape a sub-workflow return contract, or perform a required transformation.** See [n8n-expressions-official, Strong defaults / The Set-node antipattern](../../n8n-expressions-official/SKILL.md#strong-defaults).
 - Common offender: a Set node right before a Data Table Insert / Update node, mapping fields to match schema. Map directly in the Insert/Update node's expression slots.
 - Common offender: a Set node building a body before an Email/Slack node. Build the body in the body field with an expression.
 

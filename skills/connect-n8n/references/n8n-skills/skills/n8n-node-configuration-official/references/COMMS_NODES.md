@@ -74,6 +74,8 @@ For "post to a channel," use webhook. Use OAuth only for bot-level features.
 
 Discord rich embeds use a fixedCollection under `embeds.values[]`. Each embed supports `inputMethod: 'fields'` (structured) or `'json'` (raw JSON). Color is an n8n `type: 'color'` field; pass a hex string and the node converts to the decimal Discord's API expects.
 
+## Email (SMTP)
+
 ### `emailFormat` is the discriminator
 
 `'text'`, `'html'`, or `'both'`. Determines whether `text`, `html`, or both fields appear. Top-level: `fromEmail`, `toEmail`, `subject`, `emailFormat`, `text`, `html`. Under `options`: `replyTo`, `ccEmail`, `bccEmail`, `attachments`. Different from Gmail's `bccList`/`ccList` naming.
@@ -96,7 +98,7 @@ MarkdownV2 has stricter escaping than V1: `_`, `*`, `[`, `]` and others need esc
 
 ### Idempotency
 
-For workflows that can re-fire (retries, re-runs), include an idempotency check. Track sent messages in a Data Table (see `n8n-binary-and-data-official`'s `DATA_TABLES.md`). Check before sending, skip if already sent recently.
+For workflows that can re-fire (retries, re-runs), include an idempotency check. Track sent messages in a Data Table (see [n8n-data-tables-official](../../n8n-data-tables-official/SKILL.md)). Check before sending, skip if already sent recently.
 
 ### Rate limits
 

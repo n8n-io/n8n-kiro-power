@@ -105,6 +105,7 @@ Same shape as the aggregate Code node. An LLM node with `$input.all()` in its pr
 
 Default iteration handles most cases. Use `Loop Over Items` for:
 
+- **Per-item sequencing.** "Finish the whole chain for item 1, including waits, before starting item 2." Use batch size 1 and connect the final step back to the loop.
 - **Rate limiting.** "Process 10 at a time, 1s wait between batches."
 - **Batched API calls with array bodies.** "Send 50-item chunks to /bulk."
 - **Per-batch error handling.** "If a batch fails, log and continue."
@@ -116,9 +117,9 @@ For wiring details, the output-index gotcha (output 0 = **done**, output 1 = **l
 
 ## When NOT to reach for `Loop Over Items`
 
-The most common rationalization: "I need to wait for all items to finish before the next step, so I'll add Loop Over Items and use the `done` output." **You don't need Loop Over Items for that.** Default per-item iteration already waits: each item flows through the full downstream chain before the next item starts, and the post-loop node never fires "early."
+In a simple linear chain, each node processes its input items before the next node receives its output: A(item 1), A(item 2), then B(item 1), B(item 2). A loop is unnecessary just to let B consume A's completed output. This does **not** serialize the whole chain per item; use `Loop Over Items` with batch size 1 when B(item 1), including any wait, must finish before A(item 2).
 
-The cure for that mistake is almost always: **delete the Loop Over Items node, change nothing else, ship**. That is Scenario 1 below, and it covers the majority of cases.
+Remove a redundant loop only after checking that no batching, pacing, state, or per-item sequencing depends on it; reconnect the linear chain and verify the result. That is Scenario 1 below.
 
 The four scenarios are independent. Read them as separate decisions, not as alternatives that all "replace" Loop Over Items. Most builds hit Scenario 1 and are done. Scenarios 2 and 3 only enter the picture when their specific goal applies. Scenario 4 is the narrow case where Loop Over Items actually earns its place.
 
@@ -129,7 +130,7 @@ Source emits N items, per-item processor runs N times, downstream chain follows.
 ```
 [Source: 20 items]
   → [Per-item processor]   # default iter, runs 20 times
-  → [Next step]            # runs after each item, in order
+  → [Next step]            # receives the processor's completed output batch
 ```
 
 If a `Loop Over Items + done` was added here "to wait for all items" or "to make the next node run for each item," delete the Loop Over Items node and wire source straight to processor. **Do not replace it with anything.** Default iteration already does the job. The exception is `Execute Workflow` (sub-workflow): it defaults to a single all-items batch, so per-item invocation needs `mode: 'each'` on that node, not a Loop. See `n8n-subworkflows-official`.
@@ -146,15 +147,15 @@ Independent of Scenario 1. Triggered only when a downstream node's input contrac
 
 Use the Aggregate node to collapse the per-item stream into one item containing the array. Again, not a Loop replacement.
 
-### Scenario 4: genuine batching (the only time Loop Over Items earns its place)
+### Scenario 4: batching, pacing, or per-item sequencing
 
 Rate limiting (process N at a time with a Wait between batches), chunked bulk API calls (POST 50-item arrays to `/bulk`), per-batch error handling, polling a long-running job with `reset: true` and a `$runIndex` ceiling, stateful iteration where each batch depends on the previous output.
 
-"Wait for items to finish" does not qualify. Default iteration already does that.
+Waiting for a node's complete output batch does not require a loop. Waiting for an entire per-item chain before starting the next item does: use batch size 1.
 
 ### Quick disambiguation
 
-If your only reason for the Loop is "wait for items / run for each item," you are in Scenario 1. Delete the Loop. Do not add `executeOnce` or Aggregate as a substitute. They solve different problems and are only added when their own scenario applies.
+Use Scenario 1 for ordinary node-level item processing and Scenario 4 for sequencing an entire chain per item. `executeOnce` and Aggregate solve the separate problems in Scenarios 2 and 3.
 
 ## When to reach for HTTP pagination
 

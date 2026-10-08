@@ -1,0 +1,297 @@
+diff --git a/skills/n8n-code-nodes-official/references/DECISION_TREE.md b/skills/n8n-code-nodes-official/references/DECISION_TREE.md
+index 1a47f3b..42d4ce7 100644
+--- a/skills/n8n-code-nodes-official/references/DECISION_TREE.md
++++ b/skills/n8n-code-nodes-official/references/DECISION_TREE.md
+@@ -56,11 +56,11 @@ What you give up vs. a Code node:
+ 
+ - No external libraries
+ - No `require`s
+-- No access to `$input.all()` (you have `$json` for the current item, not all items at once)
++- `$input.all()` is available in Edit Fields expressions; enable Execute Once for a single cross-item aggregation result.
+ 
+ For more, see `ARROW_FUNCTIONS_IN_EDIT_FIELDS.md`.
+ 
+-**Test:** does the logic operate on a single input item (`$json`)? If yes, Edit Fields. If you need to combine items, see Stage 3.
++**Test:** can Edit Fields express the transform or aggregation? Use it, with Execute Once when combining all input items into one result. Only continue to Stage 3 when expressions and native nodes cannot cover the task.
+ 
+ ## Stage 3: justify the Code node
+ 
+diff --git a/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md b/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
+index c813c9e..d6ad0e6 100644
+--- a/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
++++ b/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
+@@ -21,11 +21,11 @@ return totals.map(json => ({ json }))
+ 
+ ### Run Once for Each Item
+ 
+-Runs once per input item. `$input.first()` (or `$input.item`) is the current item.
++Runs once per input item. `$input.item` (or `$json`) is the current item; `$input.first()` is unavailable in this mode. Return a single item object.
+ 
+ ```ts
+-const item = $input.first().json
+-return [{ json: { ...item, total: item.qty * item.price } }]
++const item = $input.item.json
++return { json: { ...item, total: item.qty * item.price } }
+ ```
+ 
+ 
+@@ -41,7 +41,7 @@ return [{ json: { ...item, total: item.qty * item.price } }]
+ 
+ ## Return shape
+ 
+-The Code node must return an array of `{ json: ... }` objects. Variations:
++In **Run Once for All Items**, return an array of `{ json: ... }` objects. In **Run Once for Each Item**, return one `{ json: ... }` object as above. The examples below use all-items mode:
+ 
+ ```ts
+ // Single output item
+@@ -63,7 +63,7 @@ return [{
+ return []
+ ```
+ 
+-Common mistake: returning the raw object instead of the array-of-`{json}` shape.
++In all-items mode, returning a raw object instead of the array-of-`{json}` shape is a mistake.
+ 
+ ```ts
+ // ❌ DON'T
+@@ -98,16 +98,14 @@ return items.map(item => ({
+ }))
+ ```
+ 
+-```ts
+-// Read binary as buffer (e.g., for hashing)
+-const item = $input.first()
+-const buffer = await this.helpers.getBinaryDataBuffer(0, 'data')
+-const hash = crypto.createHash('sha256').update(buffer).digest('hex')
+-return [{ json: { hash }, binary: item.binary }]
+-```
++For binary hashing, use the native Crypto node with `binaryPropertyName` set to the input binary key (for example, `data`). Read binary buffers in Code only when the required operation is unsupported by native nodes.
+ 
+ See `n8n-binary-and-data-official` for binary patterns. Code nodes are one of several ways to handle binary, often not the best.
+ 
++## Standard hashing and HMAC
++
++Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Keep secrets in credentials, not input items (see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`).
++
+ ## Common patterns that justify Code
+ 
+ ### Aggregation that built-in nodes don't cover
+@@ -125,23 +123,6 @@ return [{ json: { median, count: values.length } }]
+ 
+ (But: check `search_nodes` for a built-in aggregation node first. If one exists, use it.)
+ 
+-### HMAC signing
+-
+-```ts
+-const crypto = require('crypto')
+-
+-const item = $input.first().json
+-const body = JSON.stringify(item.payload)
+-const signature = crypto
+-    .createHmac('sha256', item.secret)
+-    .update(body)
+-    .digest('hex')
+-
+-return [{ json: { ...item, signature } }]
+-```
+-
+-(But: see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`. The secret should come from a credential, not be passed in input data.)
+-
+ ## Things to avoid
+ 
+ ### `console.log` for "debugging"
+diff --git a/skills/n8n-error-handling-official/references/RESPONSE_SHAPES.md b/skills/n8n-error-handling-official/references/RESPONSE_SHAPES.md
+index fa0e36b..a4f994e 100644
+--- a/skills/n8n-error-handling-official/references/RESPONSE_SHAPES.md
++++ b/skills/n8n-error-handling-official/references/RESPONSE_SHAPES.md
+@@ -101,6 +101,11 @@ For 400/`validation_error`, include per-field details. Real example produced by
+ {
+   "error": "validation_error",
+   "message": "Validation failed (3 issues):\n• name: Missing required field \"name\"\n• email: \"not-an-email\" is not valid - Contact email address\n• plan: \"premium\" is not an allowed value. Must be one of: starter, pro, enterprise - Subscription plan",
++  "details": {
++    "name": "Missing required field \"name\"",
++    "email": "\"not-an-email\" is not valid",
++    "plan": "\"premium\" is not an allowed value. Must be one of: starter, pro, enterprise"
++  },
+   "request_schema": { /* the JSON Schema, echoed back for caller-side self-correction */ }
+ }
+ ```
+diff --git a/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts b/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
+index ff3a8a0..76a781b 100644
+--- a/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
++++ b/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
+@@ -38,8 +38,10 @@ const validatorExpr = expr(`{{ (() => {
+   // the specific schema below. If the schema changes, edit this expression
+   // by hand. If you genuinely need recursive generic validation across many
+   // endpoints with varying schemas, accept the per-call cost.
+-  const body = $json.body || {};
++  const isObject = $json.body !== null && typeof $json.body === "object" && !Array.isArray($json.body);
++  const body = isObject ? $json.body : {};
+   const errors = [];
++  if (!isObject) errors.push({ p: "$body", m: "Expected a JSON object" });
+   const REQUIRED_SCHEMA = {
+     type: "object",
+     properties: {
+@@ -73,10 +75,22 @@ const validatorExpr = expr(`{{ (() => {
+     if (!Array.isArray(body.tags)) errors.push({ p: "tags", m: "Expected type \\"array\\"", d: "At least one tag for categorization" });
+     else if (body.tags.length < 1) errors.push({ p: "tags", m: "Must have at least 1 item(s), got 0", d: "At least one tag for categorization" });
+   }
++  if (Array.isArray(body.tags)) {
++    body.tags.forEach(function (tag, index) {
++      if (typeof tag !== "string" || tag.length === 0) {
++        errors.push({ p: "tags[" + index + "]", m: "Expected a non-empty string" });
++      }
++    });
++  }
++  for (const key of Object.keys(body)) {
++    if (!Object.hasOwn(REQUIRED_SCHEMA.properties, key)) {
++      errors.push({ p: key, m: "Unknown field" });
++    }
++  }
+   if (errors.length === 0) return { valid: true, validationError: null };
+   const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
+   const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
+-  const details = {};
++  const details = Object.create(null);
+   for (let i = 0; i < errors.length; i++) {
+     const e = errors[i];
+     if (!(e.p in details)) details[e.p] = e.m;
+diff --git a/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts b/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
+index 8158871..b3b488b 100644
+--- a/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
++++ b/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
+@@ -43,8 +43,10 @@ const validatorExpr = expr(`{{ (() => {
+   // the specific schema below. If the schema changes, edit this expression
+   // by hand. If you genuinely need recursive generic validation across many
+   // endpoints with varying schemas, accept the per-call cost.
+-  const body = $json.body || {};
++  const isObject = $json.body !== null && typeof $json.body === "object" && !Array.isArray($json.body);
++  const body = isObject ? $json.body : {};
+   const errors = [];
++  if (!isObject) errors.push({ p: "$body", m: "Expected a JSON object" });
+   const REQUIRED_SCHEMA = {
+     type: "object",
+     properties: {
+@@ -78,10 +80,22 @@ const validatorExpr = expr(`{{ (() => {
+     if (!Array.isArray(body.tags)) errors.push({ p: "tags", m: "Expected type \\"array\\"", d: "At least one tag for categorization" });
+     else if (body.tags.length < 1) errors.push({ p: "tags", m: "Must have at least 1 item(s), got 0", d: "At least one tag for categorization" });
+   }
++  if (Array.isArray(body.tags)) {
++    body.tags.forEach(function (tag, index) {
++      if (typeof tag !== "string" || tag.length === 0) {
++        errors.push({ p: "tags[" + index + "]", m: "Expected a non-empty string" });
++      }
++    });
++  }
++  for (const key of Object.keys(body)) {
++    if (!Object.hasOwn(REQUIRED_SCHEMA.properties, key)) {
++      errors.push({ p: key, m: "Unknown field" });
++    }
++  }
+   if (errors.length === 0) return { valid: true, validationError: null };
+   const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
+   const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
+-  const details = {};
++  const details = Object.create(null);
+   for (let i = 0; i < errors.length; i++) {
+     const e = errors[i];
+     if (!(e.p in details)) details[e.p] = e.m;
+diff --git a/skills/n8n-loops-official/SKILL.md b/skills/n8n-loops-official/SKILL.md
+index d740065..9e18d37 100644
+--- a/skills/n8n-loops-official/SKILL.md
++++ b/skills/n8n-loops-official/SKILL.md
+@@ -105,6 +105,7 @@ Same shape as the aggregate Code node. An LLM node with `$input.all()` in its pr
+ 
+ Default iteration handles most cases. Use `Loop Over Items` for:
+ 
++- **Per-item sequencing.** "Finish the whole chain for item 1, including waits, before starting item 2." Use batch size 1 and connect the final step back to the loop.
+ - **Rate limiting.** "Process 10 at a time, 1s wait between batches."
+ - **Batched API calls with array bodies.** "Send 50-item chunks to /bulk."
+ - **Per-batch error handling.** "If a batch fails, log and continue."
+@@ -116,9 +117,9 @@ For wiring details, the output-index gotcha (output 0 = **done**, output 1 = **l
+ 
+ ## When NOT to reach for `Loop Over Items`
+ 
+-The most common rationalization: "I need to wait for all items to finish before the next step, so I'll add Loop Over Items and use the `done` output." **You don't need Loop Over Items for that.** Default per-item iteration already waits: each item flows through the full downstream chain before the next item starts, and the post-loop node never fires "early."
++In a simple linear chain, each node processes its input items before the next node receives its output: A(item 1), A(item 2), then B(item 1), B(item 2). A loop is unnecessary just to let B consume A's completed output. This does **not** serialize the whole chain per item; use `Loop Over Items` with batch size 1 when B(item 1), including any wait, must finish before A(item 2).
+ 
+-The cure for that mistake is almost always: **delete the Loop Over Items node, change nothing else, ship**. That is Scenario 1 below, and it covers the majority of cases.
++Remove a redundant loop only after checking that no batching, pacing, state, or per-item sequencing depends on it; reconnect the linear chain and verify the result. That is Scenario 1 below.
+ 
+ The four scenarios are independent. Read them as separate decisions, not as alternatives that all "replace" Loop Over Items. Most builds hit Scenario 1 and are done. Scenarios 2 and 3 only enter the picture when their specific goal applies. Scenario 4 is the narrow case where Loop Over Items actually earns its place.
+ 
+@@ -129,7 +130,7 @@ Source emits N items, per-item processor runs N times, downstream chain follows.
+ ```
+ [Source: 20 items]
+   → [Per-item processor]   # default iter, runs 20 times
+-  → [Next step]            # runs after each item, in order
++  → [Next step]            # receives the processor's completed output batch
+ ```
+ 
+ If a `Loop Over Items + done` was added here "to wait for all items" or "to make the next node run for each item," delete the Loop Over Items node and wire source straight to processor. **Do not replace it with anything.** Default iteration already does the job. The exception is `Execute Workflow` (sub-workflow): it defaults to a single all-items batch, so per-item invocation needs `mode: 'each'` on that node, not a Loop. See `n8n-subworkflows-official`.
+@@ -146,15 +147,15 @@ Independent of Scenario 1. Triggered only when a downstream node's input contrac
+ 
+ Use the Aggregate node to collapse the per-item stream into one item containing the array. Again, not a Loop replacement.
+ 
+-### Scenario 4: genuine batching (the only time Loop Over Items earns its place)
++### Scenario 4: batching, pacing, or per-item sequencing
+ 
+ Rate limiting (process N at a time with a Wait between batches), chunked bulk API calls (POST 50-item arrays to `/bulk`), per-batch error handling, polling a long-running job with `reset: true` and a `$runIndex` ceiling, stateful iteration where each batch depends on the previous output.
+ 
+-"Wait for items to finish" does not qualify. Default iteration already does that.
++Waiting for a node's complete output batch does not require a loop. Waiting for an entire per-item chain before starting the next item does: use batch size 1.
+ 
+ ### Quick disambiguation
+ 
+-If your only reason for the Loop is "wait for items / run for each item," you are in Scenario 1. Delete the Loop. Do not add `executeOnce` or Aggregate as a substitute. They solve different problems and are only added when their own scenario applies.
++Use Scenario 1 for ordinary node-level item processing and Scenario 4 for sequencing an entire chain per item. `executeOnce` and Aggregate solve the separate problems in Scenarios 2 and 3.
+ 
+ ## When to reach for HTTP pagination
+ 
+diff --git a/skills/n8n-node-configuration-official/references/COMMS_NODES.md b/skills/n8n-node-configuration-official/references/COMMS_NODES.md
+index c3dc77e..7e0aa67 100644
+--- a/skills/n8n-node-configuration-official/references/COMMS_NODES.md
++++ b/skills/n8n-node-configuration-official/references/COMMS_NODES.md
+@@ -74,6 +74,8 @@ For "post to a channel," use webhook. Use OAuth only for bot-level features.
+ 
+ Discord rich embeds use a fixedCollection under `embeds.values[]`. Each embed supports `inputMethod: 'fields'` (structured) or `'json'` (raw JSON). Color is an n8n `type: 'color'` field; pass a hex string and the node converts to the decimal Discord's API expects.
+ 
++## Email (SMTP)
++
+ ### `emailFormat` is the discriminator
+ 
+ `'text'`, `'html'`, or `'both'`. Determines whether `text`, `html`, or both fields appear. Top-level: `fromEmail`, `toEmail`, `subject`, `emailFormat`, `text`, `html`. Under `options`: `replyTo`, `ccEmail`, `bccEmail`, `attachments`. Different from Gmail's `bccList`/`ccList` naming.
+@@ -96,7 +98,7 @@ MarkdownV2 has stricter escaping than V1: `_`, `*`, `[`, `]` and others need esc
+ 
+ ### Idempotency
+ 
+-For workflows that can re-fire (retries, re-runs), include an idempotency check. Track sent messages in a Data Table (see `n8n-binary-and-data-official`'s `DATA_TABLES.md`). Check before sending, skip if already sent recently.
++For workflows that can re-fire (retries, re-runs), include an idempotency check. Track sent messages in a Data Table (see [n8n-data-tables-official](../../n8n-data-tables-official/SKILL.md)). Check before sending, skip if already sent recently.
+ 
+ ### Rate limits
+ 
+diff --git a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
+index 836f5be..a87416f 100644
+--- a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
++++ b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
+@@ -73,7 +73,7 @@ Before walking the per-domain list:
+ 
+ ### Set node antipattern
+ 
+-- [ ] **Set node feeding only 0 or 1 downstream consumer.** Most common antipattern in the pack. Delete + inline the expression at the consumer. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
++- [ ] **Set node only preparing expressions for 0 or 1 downstream consumer.** Inline when this preserves behavior; retain field whitelists (Keep Only Set), sub-workflow return contracts, and required transformations. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
+ - [ ] **Set node before a Data Table Insert/Update mapping fields to schema.** Map directly in the Data Table node's per-column expression slots. → [n8n-data-tables-official strong defaults](../../n8n-data-tables-official/SKILL.md)
+ - [ ] **Set node building an email/Slack body.** Build the body inline in the comms node's body field with an expression. → [COMMS_NODES.md](../../n8n-node-configuration-official/references/COMMS_NODES.md)
+ - [ ] **Multiple consecutive Set nodes each defining one field.** Collapse, or eliminate. → [n8n-expressions-official](../../n8n-expressions-official/SKILL.md)
+diff --git a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
+index f153b0c..d2bce8c 100644
+--- a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
++++ b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
+@@ -16,7 +16,7 @@ Walk the workflow with these questions in mind. These are patterns that recur ac
+ 
+ **Set nodes:**
+ - For each Set node, count how many downstream nodes reference its output fields.
+-- If only 0 or 1 downstream consumer references each field, **delete the Set node and inline the expression at the consumer**. The most common antipattern (`n8n-expressions-official` non-negotiable #2).
++- If a Set node only prepares expressions for 0 or 1 downstream consumer, inline them where used when this preserves behavior. **Keep Set nodes that whitelist fields (Keep Only Set), shape a sub-workflow return contract, or perform a required transformation.** See [n8n-expressions-official, Strong defaults / The Set-node antipattern](../../n8n-expressions-official/SKILL.md#strong-defaults).
+ - Common offender: a Set node right before a Data Table Insert / Update node, mapping fields to match schema. Map directly in the Insert/Update node's expression slots.
+ - Common offender: a Set node building a body before an Email/Slack node. Build the body in the body field with an expression.
+ 

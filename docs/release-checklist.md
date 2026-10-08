@@ -22,7 +22,8 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | Follow-up reference reuse | In the same planning-only session, an incorrect-output follow-up loaded only `n8n-debugging-official`, reused the earlier guidance and proposed the missing discount calculation. This is file-loading evidence, not a native MCP execution or repair test. |
 | Compaction attempt | On Kiro 1.2.4, `/compact` produced an ordinary assistant summary; the context meter increased and no compaction event was visible. Reloading missing guidance after actual compaction is still unverified. |
 | Current Kiro version blocker | The installed IDE is now 1.2.4. The candidate helper detects that version and rejects it with `KIRO_VERSION`; explicitly passing `--kiro-version 1.2.4` does not change the result. Public-OAuth onboarding and native build/run/debug acceptance on this version remain blocked. |
-| Imported guidance audit | All 13 open content comments on PR #2 were confirmed on 2026-10-02: eight by running the exact examples or n8n 2.41.0's built validators/execution engine, and five by checking the pinned text and reference paths. These findings remain unfixed in the byte-identical snapshot. |
+| Imported guidance audit | All 13 content comments on PR #2 were confirmed on 2026-10-02: eight by running the exact examples or n8n 2.41.0's built validators/execution engine, and five by checking the pinned text and reference paths. On 2026-10-08, local corrections fixed the examples and guidance without modifying `n8n-io/skills`; regression tests execute both bundled validators and the per-item Code example. Sync now verifies the locked upstream files plus the reviewed patch and rejects conflicting updates. |
+| Acceptance retry | On 2026-10-08, the installed Kiro version was still 1.2.4 and computer control reported the Mac locked. No new installed-power acceptance result is claimed; the version restriction and native workflow test remain open. |
 
 The detailed September 25–28 investigation and test records are preserved at
 [the reviewed commit](https://github.com/n8n-io/n8n-kiro-power/tree/20f9df620045dd0418e78f52459a5e2a413f6013/docs).
@@ -67,8 +68,9 @@ passwords, and private payloads out of evidence.
 
 ## Release order
 
-1. Complete acceptance and review [power PR #1](https://github.com/n8n-io/n8n-kiro-power/pull/1).
-   Merge it to `main`, then verify a clean import of the public repository URL at
+1. [Power PR #1](https://github.com/n8n-io/n8n-kiro-power/pull/1) is merged.
+   Complete acceptance and review [shared-skills PR #2](https://github.com/n8n-io/n8n-kiro-power/pull/2),
+   merge it to `main`, then verify a clean import of the public repository URL at
    the merged commit. There is no npm publication or hosted service deployment.
 2. Confirm the maintainer, durable monitored email, and authorized submitter.
    Have that representative review and accept the publisher terms.

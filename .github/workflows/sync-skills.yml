@@ -85,7 +85,7 @@ jobs:
           title: 'chore: sync shared n8n skills'
           draft: always-true
           body: |
-            Updates the bundled skills, references and license from n8n-io/skills without editing their contents, and increments the power's patch version. OAuth setup and Kiro entry instructions remain owned by this repository.
+            Updates the bundled skills, references and license from n8n-io/skills, reapplies this repository's reviewed corrections, and increments the power's patch version. OAuth setup and Kiro entry instructions remain owned by this repository; no upstream files are modified.
 
             [Upstream changes](https://github.com/n8n-io/skills/compare/${{ steps.revision.outputs.previous }}...${{ steps.revision.outputs.latest }})
 

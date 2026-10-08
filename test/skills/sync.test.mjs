@@ -23,6 +23,67 @@ async function fixture(t) {
   return root;
 }
 
+async function writeCorrection(root, content) {
+  const directory = path.join(root, 'patches');
+  await mkdir(directory, { recursive: true });
+  await writeFile(path.join(directory, 'shared-skills.patch'), content);
+}
+
+const correction = `diff --git a/skills/n8n-debugging-official/references/example.json b/skills/n8n-debugging-official/references/example.json
+--- a/skills/n8n-debugging-official/references/example.json
++++ b/skills/n8n-debugging-official/references/example.json
+@@ -1 +1 @@
+-{"example":true}\r
++{"example":false}\r
+`;
+
+test('sync and check reproduce local corrections without changing untouched upstream bytes', async t => {
+  const root = await fixture(t);
+  await writeCorrection(root, correction);
+  const options = { root, fetch: async () => sample() };
+  await syncSkills(options);
+  const expected = sample();
+  expected.set('skills/n8n-debugging-official/references/example.json', Buffer.from('{"example":false}\r\n'));
+  assert.deepEqual(await readSnapshot(path.join(root, SNAPSHOT)), expected);
+  assert.equal((await syncSkills(options)).changed, 0);
+  assert.equal((await syncSkills({ ...options, check: true })).changed, 0);
+});
+
+test('conflicting or already-applied upstream corrections leave the snapshot and lock intact', async t => {
+  const root = await fixture(t);
+  await writeCorrection(root, correction);
+  await syncSkills({ root, fetch: async () => sample() });
+  const before = await readSnapshot(path.join(root, SNAPSHOT));
+  const lock = await readFile(path.join(root, 'shared-skills.lock.json'));
+  for (const replacement of ['{"example":"changed"}\r\n', '{"example":false}\r\n']) {
+    const upstream = sample();
+    upstream.set('skills/n8n-debugging-official/references/example.json', Buffer.from(replacement));
+    await assert.rejects(syncSkills({ root, commit: 'b'.repeat(40), fetch: async () => upstream }), /patch does not apply/);
+    assert.deepEqual(await readSnapshot(path.join(root, SNAPSHOT)), before);
+    assert.deepEqual(await readFile(path.join(root, 'shared-skills.lock.json')), lock);
+  }
+});
+
+test('local corrections cannot add files or change the upstream license', async t => {
+  const root = await fixture(t);
+  await writeCorrection(root, `diff --git a/extra.txt b/extra.txt
+new file mode 100644
+--- /dev/null
++++ b/extra.txt
+@@ -0,0 +1 @@
++unexpected
+`);
+  await assert.rejects(syncSkills({ root, fetch: async () => sample() }), /only edit existing/);
+  await writeCorrection(root, `diff --git a/LICENSE b/LICENSE
+--- a/LICENSE
++++ b/LICENSE
+@@ -1 +1 @@
+-license\r
++changed license\r
+`);
+  await assert.rejects(syncSkills({ root, fetch: async () => sample() }), /preserve LICENSE/);
+});
+
 test('sync preserves upstream bytes, is idempotent, and leaves local skills alone', async t => {
   const root = await fixture(t);
   const local = path.join(root, 'skills/connect-n8n/SKILL.md');

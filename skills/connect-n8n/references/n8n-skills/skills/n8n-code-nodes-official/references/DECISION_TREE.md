@@ -56,11 +56,11 @@ What you give up vs. a Code node:
 
 - No external libraries
 - No `require`s
-- No access to `$input.all()` (you have `$json` for the current item, not all items at once)
+- `$input.all()` is available in Edit Fields expressions; enable Execute Once for a single cross-item aggregation result.
 
 For more, see `ARROW_FUNCTIONS_IN_EDIT_FIELDS.md`.
 
-**Test:** does the logic operate on a single input item (`$json`)? If yes, Edit Fields. If you need to combine items, see Stage 3.
+**Test:** can Edit Fields express the transform or aggregation? Use it, with Execute Once when combining all input items into one result. Only continue to Stage 3 when expressions and native nodes cannot cover the task.
 
 ## Stage 3: justify the Code node
 

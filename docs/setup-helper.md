@@ -167,8 +167,8 @@ accounts. CI checks bundle reproducibility and Node 22/24 on macOS/Linux/Windows
 
 ### Shared skills
 
-`shared-skills.lock.json` pins the full commit in `n8n-io/skills`. Its `skills/`
-tree and license are copied byte-for-byte into
+`shared-skills.lock.json` pins the full commit in `n8n-io/skills`. Sync reads its
+Git blobs, applies [local corrections](../patches/shared-skills.patch), and writes to
 `skills/connect-n8n/references/n8n-skills/`. All 14 skills and their references
 are bundled so cross-skill links work. Kiro loads only the three local entry
 skills directly; they read the shared router and task-specific files on demand.
@@ -186,14 +186,19 @@ npm run skills:sync -- --commit "<full upstream commit SHA>"
 ```
 
 Sync replaces only the imported directory; the optional commit also updates the
-lock. Check compares every imported file against Git blobs at the locked commit.
+lock. Check compares every imported file against the locked Git blobs plus the
+same patch; all unpatched files and the license remain byte-for-byte upstream.
 Executable or linked upstream entries stop the import for review instead of
 silently changing file modes. A failed lock replacement rolls back the snapshot;
 after an interrupted process, rerun sync to restore the atomically locked commit.
 It is a separate CI job; `npm run check` validates references and tests locally
-without fetching upstream. Keep local changes in the Kiro entry skills; leave the
-imported files unchanged. Commit the lock and snapshot together. Revert that pair
-to roll back an update. No commands push to or modify `n8n-io/skills`.
+without fetching upstream. Keep Kiro behavior in the entry skills. For shared
+content fixes, edit `patches/shared-skills.patch` and regenerate the snapshot;
+do not leave untracked edits in the generated files. A conflicting or already
+applied patch stops sync before it changes the snapshot or lock. When upstream
+fixes an issue, remove the corresponding patch hunks and review the result.
+Commit the patch, lock and generated files together; revert them together to roll
+back. No commands push to or modify `n8n-io/skills`.
 
 After merge to `main`, **Sync shared skills** runs weekly or through Run workflow.
 It opens or updates one draft PR on the bot-owned `codex/sync-n8n-skills` branch,

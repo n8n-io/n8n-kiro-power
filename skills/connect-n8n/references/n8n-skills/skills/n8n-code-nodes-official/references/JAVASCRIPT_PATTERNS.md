@@ -21,11 +21,11 @@ return totals.map(json => ({ json }))
 
 ### Run Once for Each Item
 
-Runs once per input item. `$input.first()` (or `$input.item`) is the current item.
+Runs once per input item. `$input.item` (or `$json`) is the current item; `$input.first()` is unavailable in this mode. Return a single item object.
 
 ```ts
-const item = $input.first().json
-return [{ json: { ...item, total: item.qty * item.price } }]
+const item = $input.item.json
+return { json: { ...item, total: item.qty * item.price } }
 ```
 
 
@@ -41,7 +41,7 @@ return [{ json: { ...item, total: item.qty * item.price } }]
 
 ## Return shape
 
-The Code node must return an array of `{ json: ... }` objects. Variations:
+In **Run Once for All Items**, return an array of `{ json: ... }` objects. In **Run Once for Each Item**, return one `{ json: ... }` object as above. The examples below use all-items mode:
 
 ```ts
 // Single output item
@@ -63,7 +63,7 @@ return [{
 return []
 ```
 
-Common mistake: returning the raw object instead of the array-of-`{json}` shape.
+In all-items mode, returning a raw object instead of the array-of-`{json}` shape is a mistake.
 
 ```ts
 // ❌ DON'T
@@ -98,15 +98,13 @@ return items.map(item => ({
 }))
 ```
 
-```ts
-// Read binary as buffer (e.g., for hashing)
-const item = $input.first()
-const buffer = await this.helpers.getBinaryDataBuffer(0, 'data')
-const hash = crypto.createHash('sha256').update(buffer).digest('hex')
-return [{ json: { hash }, binary: item.binary }]
-```
+For binary hashing, use the native Crypto node with `binaryPropertyName` set to the input binary key (for example, `data`). Read binary buffers in Code only when the required operation is unsupported by native nodes.
 
 See `n8n-binary-and-data-official` for binary patterns. Code nodes are one of several ways to handle binary, often not the best.
+
+## Standard hashing and HMAC
+
+Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Keep secrets in credentials, not input items (see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`).
 
 ## Common patterns that justify Code
 
@@ -124,23 +122,6 @@ return [{ json: { median, count: values.length } }]
 ```
 
 (But: check `search_nodes` for a built-in aggregation node first. If one exists, use it.)
-
-### HMAC signing
-
-```ts
-const crypto = require('crypto')
-
-const item = $input.first().json
-const body = JSON.stringify(item.payload)
-const signature = crypto
-    .createHmac('sha256', item.secret)
-    .update(body)
-    .digest('hex')
-
-return [{ json: { ...item, signature } }]
-```
-
-(But: see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`. The secret should come from a credential, not be passed in input data.)
 
 ## Things to avoid
 

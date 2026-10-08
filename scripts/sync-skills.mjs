@@ -9,6 +9,7 @@ import { parseArgs, promisify } from 'node:util';
 export const UPSTREAM = 'https://github.com/n8n-io/skills.git';
 export const SNAPSHOT = 'skills/connect-n8n/references/n8n-skills';
 const LOCK = 'shared-skills.lock.json';
+const CORRECTIONS = 'patches/shared-skills.patch';
 const exec = promisify(execFile);
 
 function validateCommit(commit) {
@@ -59,6 +60,32 @@ export async function readSnapshot(directory, prefix = '') {
   return files;
 }
 
+async function applyCorrections(files, root) {
+  const patch = path.resolve(root, CORRECTIONS);
+  const info = await lstat(patch).catch(error => { if (error.code !== 'ENOENT') throw error; });
+  if (!info) return files;
+  assert.ok(info.isFile(), 'The shared-skills patch must be an ordinary file.');
+  const directory = await mkdtemp(path.join(tmpdir(), 'n8n-skill-corrections-'));
+  try {
+    for (const [file, bytes] of files) {
+      const target = path.join(directory, file);
+      await mkdir(path.dirname(target), { recursive: true });
+      await writeFile(target, bytes);
+    }
+    // Apply in isolation before replacing any installed files. Conflicting or
+    // already-applied upstream fixes require a maintainer to retire the patch.
+    await exec('git', ['apply', '--whitespace=nowarn', '--', patch], { cwd: directory, timeout: 10000 });
+    const corrected = await readSnapshot(directory);
+    assert.deepEqual([...corrected.keys()].sort(), [...files.keys()].sort(), 'Corrections must only edit existing reference files.');
+    for (const file of ['LICENSE', 'NOTICE']) {
+      if (files.has(file)) assert.ok(files.get(file).equals(corrected.get(file)), `Corrections must preserve ${file}.`);
+    }
+    return corrected;
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
 export function localMarkdownLinks(text) {
   // A Markdown example inside a code span or fenced block is not a file link.
   const prose = text.replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, '').replace(/`+[^`]*`+/g, '');
@@ -107,13 +134,13 @@ export async function syncSkills({ root = process.cwd(), check = false, commit, 
     const info = await lstat(destination).catch(error => { if (error.code !== 'ENOENT') throw error; });
     assert.ok(!info || info.isDirectory(), `Snapshot path must be an ordinary directory: ${destination}`);
   }
-  const expected = await fetch(revision);
+  const expected = await applyCorrections(await fetch(revision), root);
   const skills = validateSnapshot(expected);
   const current = await readSnapshot(destination);
   const changed = [...new Set([...expected.keys(), ...current.keys()])]
     .filter(file => !expected.get(file)?.equals(current.get(file) ?? Buffer.alloc(0)) || !current.has(file)).sort();
   if (check) {
-    assert.equal(changed.length, 0, `Shared skills differ from ${revision}. Run npm run skills:sync.\n${changed.join('\n')}`);
+    assert.equal(changed.length, 0, `Shared skills differ from ${revision} plus local corrections. Run npm run skills:sync.\n${changed.join('\n')}`);
   } else if (changed.length || revision !== lock.commit) {
     await mkdir(path.dirname(destination), { recursive: true });
     const staging = await mkdtemp(path.join(path.dirname(destination), '.n8n-skills-'));

@@ -43,8 +43,10 @@ const validatorExpr = expr(`{{ (() => {
   // the specific schema below. If the schema changes, edit this expression
   // by hand. If you genuinely need recursive generic validation across many
   // endpoints with varying schemas, accept the per-call cost.
-  const body = $json.body || {};
+  const isObject = $json.body !== null && typeof $json.body === "object" && !Array.isArray($json.body);
+  const body = isObject ? $json.body : {};
   const errors = [];
+  if (!isObject) errors.push({ p: "$body", m: "Expected a JSON object" });
   const REQUIRED_SCHEMA = {
     type: "object",
     properties: {
@@ -78,10 +80,22 @@ const validatorExpr = expr(`{{ (() => {
     if (!Array.isArray(body.tags)) errors.push({ p: "tags", m: "Expected type \\"array\\"", d: "At least one tag for categorization" });
     else if (body.tags.length < 1) errors.push({ p: "tags", m: "Must have at least 1 item(s), got 0", d: "At least one tag for categorization" });
   }
+  if (Array.isArray(body.tags)) {
+    body.tags.forEach(function (tag, index) {
+      if (typeof tag !== "string" || tag.length === 0) {
+        errors.push({ p: "tags[" + index + "]", m: "Expected a non-empty string" });
+      }
+    });
+  }
+  for (const key of Object.keys(body)) {
+    if (!Object.hasOwn(REQUIRED_SCHEMA.properties, key)) {
+      errors.push({ p: key, m: "Unknown field" });
+    }
+  }
   if (errors.length === 0) return { valid: true, validationError: null };
   const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
   const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
-  const details = {};
+  const details = Object.create(null);
   for (let i = 0; i < errors.length; i++) {
     const e = errors[i];
     if (!(e.p in details)) details[e.p] = e.m;
