@@ -6,16 +6,18 @@ its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
 **Status: draft candidate.** Public-client OAuth is verified end to end against
 both a local and a cloud instance, from an installed power, through Kiro
-authorization to a successful workflow read. The build, test, and repair loops
-still require acceptance testing. See the
+authorization to a successful workflow read. Local native MCP acceptance also
+passed draft creation, execution, wrong-output repair and runtime-error repair
+on Kiro 1.2.37. Pinned testing failed when tool calls omitted required data;
+manual execution was verified as a fallback. Broader release gates remain in the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements
 
-- **Kiro IDE 1.1.70**, in a local session. Setup currently accepts this version only.
+- **Kiro IDE 1.1.70, 1.2.4 or 1.2.37**, in a local session; see the release checklist for live validation.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
-  version floor; live testing used n8n 2.41.0 development.
+  version floor; local live testing used n8n 2.41.0 and 2.42.0 development.
 - An owner/admin must enable **Settings > Instance-level MCP**. Workflow builder
   tools must also be enabled; self-hosted admins can disable them with
   `N8N_MCP_BUILDER_ENABLED=false`.
@@ -28,7 +30,7 @@ are a separate Preview feature and are outside this release.
 
 ## Install and connect
 
-1. For the draft, check out PR #1's `initial-power` branch. In **Kiro > Powers >
+1. For this draft, check out PR #2's `codex/shared-skills-sync` branch. In **Kiro > Powers >
    Add Custom Power > Import power from a folder**, select the directory
    containing `plugin.json`. GitHub installation from the repository URL becomes
    the release path after the package is merged to `main`.
@@ -38,7 +40,7 @@ are a separate Preview feature and are outside this release.
 3. The helper creates a native user-level MCP connection shared across projects.
    Request workspace scope to configure only the current project.
 4. Under **Kiro > MCP Servers**, select the named server and **Authenticate**.
-   Sign in to n8n and review consent. Kiro 1.1.70 may request all advertised
+   Sign in to n8n and review consent. Kiro may request all advertised
    permissions: choose **Custom**, then workflow read/write/execute and execution
    read for basic workflow tasks. Use narrower grants for read-only tasks.
 5. Ask Kiro to search for a workflow. A successful read verifies the connection;
@@ -90,6 +92,13 @@ rotation. The OAuth helper does not manage tokens or adopt this entry.
 - `connect-n8n` checks the intended instance, connection, and access.
 - `build-workflow` uses workspace context to create and test workflows.
 - `debug-execution` investigates execution data and applies grounded repairs.
+
+Workflow guidance comes from a pinned copy of
+[n8n-io/skills](https://github.com/n8n-io/skills), bundled with the power and
+[reviewed local corrections](patches/shared-skills.patch). The three
+Kiro entry skills load the relevant shared guidance on demand; there is no second
+plugin to install. This repository owns OAuth setup and the Kiro adaptations.
+See [shared-skill maintenance](docs/setup-helper.md#shared-skills) for updates.
 
 The server supplies tool schemas and SDK instructions. Missing tools can reflect
 version, enabled features, licensing, OAuth permissions, or user access. Creating

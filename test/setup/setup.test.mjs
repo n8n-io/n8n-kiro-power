@@ -202,10 +202,38 @@ test('later port use does not invalidate a reused registration or cause another 
 
 test('unsupported Kiro and invalid callback ports do not register', async t => {
   const f = await fixture(t);
-  await assert.rejects(runSetup({ ...f.options, kiroVersion: '9.0.0' }, f.deps), { code: 'KIRO_VERSION' });
+  for (const kiroVersion of ['1.1.69', '1.2.5', '1.2.38', '1.2.4-beta.1', '1.2.37-beta.1', '9.0.0', undefined]) {
+    await assert.rejects(runSetup({ ...f.options, kiroVersion }, { ...f.deps, detectKiroVersion: async () => kiroVersion }), { code: 'KIRO_VERSION' });
+  }
   await assert.rejects(runSetup({ ...f.options, callbackPort: 0 }, f.deps), { code: 'CALLBACK_PORT' });
   assert.equal(f.count(), 0);
 });
+
+for (const kiroVersion of ['1.2.4', '1.2.37']) {
+  test(`detected Kiro ${kiroVersion} configures a public client with the registered callback`, async t => {
+    const f = await fixture(t);
+    const result = await runSetup({ ...f.options, kiroVersion: undefined }, { ...f.deps, detectKiroVersion: async () => kiroVersion });
+    const registration = f.requests.find(request => request.method === 'POST').body;
+    const config = parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'];
+    assert.equal(result.status, 'configured_awaiting_authorization');
+    assert.equal(registration.token_endpoint_auth_method, 'none');
+    assert.deepEqual(registration.redirect_uris, [result.callbackUri]);
+    assert.equal(config.oauth.clientId, 'test-client-1');
+    assert.equal(config.oauth.clientSecret, undefined);
+    assert.equal(`http://${config.oauth.redirectUri}/oauth/callback`, result.callbackUri);
+  });
+
+  test(`upgrading to Kiro ${kiroVersion} reuses the existing registration and settings`, async t => {
+    const f = await fixture(t);
+    await runSetup(f.options, f.deps);
+    const config = await readFile(f.configPath, 'utf8');
+    const result = await runSetup({ ...f.options, kiroVersion }, f.deps);
+    assert.equal(result.registration, 'reused');
+    assert.equal(result.changed, false);
+    assert.equal(f.count(), 1);
+    assert.equal(await readFile(f.configPath, 'utf8'), config);
+  });
+}
 
 test('atomic writes reject concurrent changes and preserve the external edit', async t => {
   const f = await fixture(t);

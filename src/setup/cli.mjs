@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { runSetup } from './setup.mjs';
 import { SetupError } from './errors.mjs';
+import { SUPPORTED_KIRO_VERSIONS } from './kiro.mjs';
 
 export { runSetup };
 
@@ -21,7 +22,7 @@ export async function main(args = process.argv.slice(2)) {
     const { values, positionals } = parseArgs({ args, allowPositionals: true, options: OPTIONS });
     json = Boolean(values.json);
     if (values.help) {
-      console.log('Usage: node setup.mjs <configure|doctor|repair|remove> --url <n8n URL>\n\nOptions: --name <name> --scope <user|workspace> --workspace <directory>\n         --callback-port <1024-65535> --kiro-version <installed version>\n         --dry-run --json\nRepair:  --new-registration (explicit retry/replacement) or --callback-port\n\nRequires Node.js 22+ and Kiro IDE 1.1.70. User scope is the default.\nThe helper configures a public client; sign in and approve access in Kiro.');
+      console.log(`Usage: node setup.mjs <configure|doctor|repair|remove> --url <n8n URL>\n\nOptions: --name <name> --scope <user|workspace> --workspace <directory>\n         --callback-port <1024-65535> --kiro-version <installed version>\n         --dry-run --json\nRepair:  --new-registration (explicit retry/replacement) or --callback-port\n\nRequires Node.js 22+ and Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(' or ')}. User scope is the default.\nThe helper configures a public client; sign in and approve access in Kiro.`);
       return;
     }
     if (positionals.length > 1) throw new SetupError('ARGUMENT', 'Supply one command. Use --help for usage.');

@@ -6,6 +6,8 @@ import { promisify } from 'node:util';
 import { fail } from './errors.mjs';
 import { SCOPES } from './discovery.mjs';
 
+export const SUPPORTED_KIRO_VERSIONS = ['1.1.70', '1.2.4', '1.2.37'];
+
 export async function detectKiroVersion() {
   if (process.platform === 'darwin') {
     try {
@@ -20,8 +22,8 @@ export async function detectKiroVersion() {
 }
 
 export function requireSupportedKiro(version) {
-  if (version !== '1.1.70') {
-    fail('KIRO_VERSION', 'The current helper is validated for Kiro IDE 1.1.70 only. Check Help > About; supply --kiro-version 1.1.70 only if that is the installed version.');
+  if (!SUPPORTED_KIRO_VERSIONS.includes(version)) {
+    fail('KIRO_VERSION', `Setup supports Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(' or ')}. Check Help > About and supply --kiro-version only with the actual installed version.`);
   }
 }
 
