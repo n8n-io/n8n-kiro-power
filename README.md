@@ -6,16 +6,18 @@ its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
 **Status: draft candidate.** Public-client OAuth is verified end to end against
 both a local and a cloud instance, from an installed power, through Kiro
-authorization to a successful workflow read. The build, test, and repair loops
-still require acceptance testing. See the
+authorization to a successful workflow read. Local native MCP acceptance also
+passed draft creation, execution, wrong-output repair and runtime-error repair
+on Kiro 1.2.37. Pinned testing failed when tool calls omitted required data;
+manual execution was verified as a fallback. Broader release gates remain in the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements
 
-- **Kiro IDE 1.1.70 or 1.2.4**, in a local session; see the release checklist for live validation.
+- **Kiro IDE 1.1.70, 1.2.4 or 1.2.37**, in a local session; see the release checklist for live validation.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
-  version floor; live testing used n8n 2.41.0 development.
+  version floor; local live testing used n8n 2.41.0 and 2.42.0 development.
 - An owner/admin must enable **Settings > Instance-level MCP**. Workflow builder
   tools must also be enabled; self-hosted admins can disable them with
   `N8N_MCP_BUILDER_ENABLED=false`.

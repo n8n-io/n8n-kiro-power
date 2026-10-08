@@ -1,7 +1,7 @@
 ---
 name: connect-n8n
 description: "Set up and verify the n8n MCP connection before using n8n tools. Run on the first turn touching n8n, or when tools are missing, OAuth fails, a request times out, or the user asks to connect a new instance. Uses a bundled public-client OAuth setup helper and Kiro's native MCP settings."
-compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70 or 1.2.4, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; the live public-OAuth test used local n8n 2.41.0 development.
+compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70, 1.2.4 or 1.2.37, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; live local public-OAuth tests used n8n 2.41.0 and 2.42.0 development.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -65,6 +65,12 @@ installation, not a reason to silently substitute another pack.
 Use the native connection's live tool names and schemas. If required nested
 fields are missing, report the limitation and stop that operation; do not guess
 arguments or switch to the n8n REST API for workflow operations.
+
+If Kiro repeatedly omits required `pinData` from `test_workflow`, stop retrying
+that tool and report pinned testing as unavailable. When its live schema supports
+`manual` execution, `execute_workflow` can run the draft instead. Apply the graph,
+pin and effects checks below: this path can run real integrations and needs
+authorization for their effects. Do not publish a workflow to bypass the failure.
 
 Before each test, inspect the current pin map and unpinned nodes, including Code
 I/O, commands, file operations and sub-workflows. Obtain authorization for real

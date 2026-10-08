@@ -172,7 +172,7 @@ async function register(discovery, callbackUri2, options = {}) {
 }
 
 // src/setup/kiro.mjs
-var SUPPORTED_KIRO_VERSIONS = ["1.1.70", "1.2.4"];
+var SUPPORTED_KIRO_VERSIONS = ["1.1.70", "1.2.4", "1.2.37"];
 async function detectKiroVersion() {
   if (process.platform === "darwin") {
     try {

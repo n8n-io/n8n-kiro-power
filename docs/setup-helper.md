@@ -21,7 +21,7 @@ Cross-origin identity providers and redirects are unsupported.
 
 Check `node --version`: Node.js 22+ must be available in Kiro's environment.
 Explain a missing runtime; do not install one automatically. Setup currently
-accepts Kiro IDE 1.1.70 and 1.2.4. If detection fails, check Help > About and pass the
+accepts Kiro IDE 1.1.70, 1.2.4 and 1.2.37. If detection fails, check Help > About and pass the
 actual version with `--kiro-version`; never supply an older version to bypass it.
 
 For an installed power, resolve `scripts/setup.mjs` relative to the installed
@@ -119,8 +119,10 @@ browser request. After consent, repeat the connection skill's read-only prefligh
   before inspecting or running them. Missing tools do not prove an empty instance.
 - **Missing tool schema:** Kiro's old bundled-power path omitted nested schemas.
   Inspect the native connection's advertised schema; if required fields are
-  absent, stop that operation rather than guessing arguments. Native build and
-  debug acceptance remains pending in the release checklist.
+  absent, stop that operation rather than guessing arguments. For repeated
+  missing `pinData` on `test_workflow`, follow the connection skill's guarded
+  manual-execution fallback. Current acceptance and limits are recorded in the
+  release checklist.
 
 Kiro 1.1.70's OAuth cache key omits the configured client ID. The helper adds a
 nonsecret `X-N8N-Kiro-Connection` header derived from that ID so replacement

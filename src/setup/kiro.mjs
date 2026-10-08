@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { fail } from './errors.mjs';
 import { SCOPES } from './discovery.mjs';
 
-export const SUPPORTED_KIRO_VERSIONS = ['1.1.70', '1.2.4'];
+export const SUPPORTED_KIRO_VERSIONS = ['1.1.70', '1.2.4', '1.2.37'];
 
 export async function detectKiroVersion() {
   if (process.platform === 'darwin') {
