@@ -95,11 +95,7 @@ const validatorExpr = expr(`{{ (() => {
   if (errors.length === 0) return { valid: true, validationError: null };
   const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
   const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
-  const details = Object.create(null);
-  for (let i = 0; i < errors.length; i++) {
-    const e = errors[i];
-    if (!(e.p in details)) details[e.p] = e.m;
-  }
+  const details = Object.fromEntries(errors.map(function (e) { return [e.p, e.m]; }));
   return { valid: false, validationError: validationError, details: details, requiredSchema: REQUIRED_SCHEMA };
 })() }}`)
 

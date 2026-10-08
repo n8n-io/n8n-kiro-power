@@ -17,7 +17,7 @@ index 1a47f3b..42d4ce7 100644
  ## Stage 3: justify the Code node
  
 diff --git a/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md b/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
-index c813c9e..d6ad0e6 100644
+index c813c9e..ceea547 100644
 --- a/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
 +++ b/skills/n8n-code-nodes-official/references/JAVASCRIPT_PATTERNS.md
 @@ -21,11 +21,11 @@ return totals.map(json => ({ json }))
@@ -70,7 +70,7 @@ index c813c9e..d6ad0e6 100644
  
 +## Standard hashing and HMAC
 +
-+Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Keep secrets in credentials, not input items (see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`).
++Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Crypto's `secret` field cannot bind directly to a credential; see the documented sub-workflow input workaround in [CUSTOM_CREDENTIALS.md](../../n8n-credentials-and-security-official/references/CUSTOM_CREDENTIALS.md) and review the risk of exposing the key in execution data. Avoid hardcoding signing keys in node text fields.
 +
  ## Common patterns that justify Code
  
@@ -116,7 +116,7 @@ index fa0e36b..a4f994e 100644
  }
  ```
 diff --git a/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts b/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
-index ff3a8a0..76a781b 100644
+index ff3a8a0..91551f8 100644
 --- a/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
 +++ b/skills/n8n-error-handling-official/references/examples/validation-subworkflow-usage.ts
 @@ -38,8 +38,10 @@ const validatorExpr = expr(`{{ (() => {
@@ -131,7 +131,7 @@ index ff3a8a0..76a781b 100644
    const REQUIRED_SCHEMA = {
      type: "object",
      properties: {
-@@ -73,10 +75,22 @@ const validatorExpr = expr(`{{ (() => {
+@@ -73,14 +75,22 @@ const validatorExpr = expr(`{{ (() => {
      if (!Array.isArray(body.tags)) errors.push({ p: "tags", m: "Expected type \\"array\\"", d: "At least one tag for categorization" });
      else if (body.tags.length < 1) errors.push({ p: "tags", m: "Must have at least 1 item(s), got 0", d: "At least one tag for categorization" });
    }
@@ -151,12 +151,16 @@ index ff3a8a0..76a781b 100644
    const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
    const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
 -  const details = {};
-+  const details = Object.create(null);
-   for (let i = 0; i < errors.length; i++) {
-     const e = errors[i];
-     if (!(e.p in details)) details[e.p] = e.m;
+-  for (let i = 0; i < errors.length; i++) {
+-    const e = errors[i];
+-    if (!(e.p in details)) details[e.p] = e.m;
+-  }
++  const details = Object.fromEntries(errors.map(function (e) { return [e.p, e.m]; }));
+   return { valid: false, validationError: validationError, details: details, requiredSchema: REQUIRED_SCHEMA };
+ })() }}`)
+ 
 diff --git a/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts b/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
-index 8158871..b3b488b 100644
+index 8158871..090109b 100644
 --- a/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
 +++ b/skills/n8n-error-handling-official/references/examples/validation-subworkflow.ts
 @@ -43,8 +43,10 @@ const validatorExpr = expr(`{{ (() => {
@@ -171,7 +175,7 @@ index 8158871..b3b488b 100644
    const REQUIRED_SCHEMA = {
      type: "object",
      properties: {
-@@ -78,10 +80,22 @@ const validatorExpr = expr(`{{ (() => {
+@@ -78,14 +80,22 @@ const validatorExpr = expr(`{{ (() => {
      if (!Array.isArray(body.tags)) errors.push({ p: "tags", m: "Expected type \\"array\\"", d: "At least one tag for categorization" });
      else if (body.tags.length < 1) errors.push({ p: "tags", m: "Must have at least 1 item(s), got 0", d: "At least one tag for categorization" });
    }
@@ -191,10 +195,14 @@ index 8158871..b3b488b 100644
    const lines = errors.map(function (e) { return "• " + e.p + ": " + e.m + (e.d ? " - " + e.d : ""); });
    const validationError = "Validation failed (" + errors.length + " issue" + (errors.length > 1 ? "s" : "") + "):\\n" + lines.join("\\n");
 -  const details = {};
-+  const details = Object.create(null);
-   for (let i = 0; i < errors.length; i++) {
-     const e = errors[i];
-     if (!(e.p in details)) details[e.p] = e.m;
+-  for (let i = 0; i < errors.length; i++) {
+-    const e = errors[i];
+-    if (!(e.p in details)) details[e.p] = e.m;
+-  }
++  const details = Object.fromEntries(errors.map(function (e) { return [e.p, e.m]; }));
+   return { valid: false, validationError: validationError, details: details, requiredSchema: REQUIRED_SCHEMA };
+ })() }}`)
+ 
 diff --git a/skills/n8n-loops-official/SKILL.md b/skills/n8n-loops-official/SKILL.md
 index d740065..9e18d37 100644
 --- a/skills/n8n-loops-official/SKILL.md

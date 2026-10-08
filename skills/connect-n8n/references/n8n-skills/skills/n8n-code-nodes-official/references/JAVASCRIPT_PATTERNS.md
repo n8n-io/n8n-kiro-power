@@ -104,7 +104,7 @@ See `n8n-binary-and-data-official` for binary patterns. Code nodes are one of se
 
 ## Standard hashing and HMAC
 
-Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Keep secrets in credentials, not input items (see `n8n-credentials-and-security-official`'s `CUSTOM_CREDENTIALS.md`).
+Use the native Crypto node for standard hashes and HMAC signatures. Only a non-standard signing scheme unsupported by Crypto can justify Code; first inspect the node's available operations with `get_node_types`. Crypto's `secret` field cannot bind directly to a credential; see the documented sub-workflow input workaround in [CUSTOM_CREDENTIALS.md](../../n8n-credentials-and-security-official/references/CUSTOM_CREDENTIALS.md) and review the risk of exposing the key in execution data. Avoid hardcoding signing keys in node text fields.
 
 ## Common patterns that justify Code
 
