@@ -1,0 +1,39 @@
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_d6103aa7cc9bce 4
+  s_99430064d5fc8e::t_5caf6cded6deab 69-74
+docs/release-checklist.md
+  s_99430064d5fc8e::t_5b2e6f16611eb4 7
+  s_99430064d5fc8e::t_525cedf95dc88b 25,98-102
+  s_99430064d5fc8e::t_d6103aa7cc9bce 16,22-23,28,30-55,80,89-91
+  s_99430064d5fc8e::t_9e3ecbbb1cf283 24,26,61-66
+src/setup/kiro.mjs
+  s_99430064d5fc8e::t_5b2e6f16611eb4 9
+test/setup/setup.test.mjs
+  s_99430064d5fc8e::t_e6699d867bff3e 213-224,226-235
+  s_99430064d5fc8e::t_f4f481320ba39f 205,212,236
+README.md
+  s_99430064d5fc8e::t_d6103aa7cc9bce 9-10,20
+  s_99430064d5fc8e::t_5b2e6f16611eb4 17
+  s_99430064d5fc8e::t_9e3ecbbb1cf283 11-12
+docs/setup-helper.md
+  s_99430064d5fc8e::t_5b2e6f16611eb4 24
+  s_99430064d5fc8e::t_d6103aa7cc9bce 122-125
+plugin.json
+  s_99430064d5fc8e::t_5b2e6f16611eb4 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "cd4932b7cceefde5a4dbd9b6b3e4dee6f9711e80",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
