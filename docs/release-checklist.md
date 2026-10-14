@@ -1,6 +1,8 @@
 # Release checklist
 
-**Status: draft candidate.** This is the single current release checklist.
+**Status: merged to main; release validation incomplete.** Last reviewed 2026-10-14.
+[PR #2](https://github.com/n8n-io/n8n-kiro-power/pull/2) merged on 2026-10-08
+as `65bff7a`. The remaining acceptance checks and submission steps are below.
 The [setup guide](setup-helper.md) describes the implemented commands.
 The package contains skills and a bundled helper; it ships no root `mcp.json`.
 
@@ -12,27 +14,25 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 
 | Check | Evidence and limits |
 | --- | --- |
-| Helper regression tests | On 2026-09-29, all 43 tests passed locally. Seven new regression cases failed against `20f9df6` and pass with the fixes. |
-| Current candidate checks | On 2026-10-08, all 66 tests, bundle reproducibility and package checks passed on macOS / Node 24.19.0, including detected Kiro 1.2.37 and upgrade/reuse coverage. Both bundled validators and their full error-response expressions separately passed checks with the local n8n 2.43.0 expression runtime, including scalar bodies, invalid tags, unknown fields and a `__proto__` key. This expression runtime was not the live MCP server below. |
-| Cross-platform CI | `20f9df6` passed Node 22/24 on macOS, Linux, and Windows plus manifest validation. Check the candidate commit's CI before release; helper tests do not establish IDE support on every OS. |
-| New helper and OAuth | On 2026-09-28, Kiro 1.1.70 completed fresh S256 PKCE consent with a helper-created public client, discovered 23 tools, and called `search_workflows` successfully. Target: isolated local n8n 2.41.0 development without the Basic-authentication patch; disposable workspace configuration. |
-| Earlier public-OAuth proof | Synthetic workflow creation/execution, refresh, revocation, and reconnect passed locally before the final helper was packaged. This is not installed-package acceptance. |
+| Automated checks | On 2026-10-08, all 66 tests, bundle reproducibility and package checks passed on macOS / Node 24.19.0, including detected Kiro 1.2.37 and upgrade/reuse coverage. All [eight validation jobs](https://github.com/n8n-io/n8n-kiro-power/actions/runs/37848562847) passed on merged commit `65bff7a`: Node 22/24 on macOS, Linux and Windows, plus manifest and shared-snapshot checks. Helper CI does not establish IDE support on every OS. |
+| Validator runtime | Both bundled validators and their full error-response expressions passed checks with the local n8n 2.43.0 expression runtime, including scalar bodies, invalid tags, unknown fields and a `__proto__` key. This runtime was not the live MCP server below. |
+| Local public OAuth | On 2026-09-28, Kiro 1.1.70 completed S256 PKCE consent with a helper-created public client and called `search_workflows` on local n8n 2.41.0 development without the Basic-authentication patch. The 2026-10-08 installed-power test completed OAuth and a native read on Kiro 1.2.37 / local n8n 2.42.0 development. |
 | Cloud | On 2026-09-30, an installed power on local Kiro 1.1.70 configured a public client against a cloud instance, completed browser authorization and consent, and returned results from `search_workflows`. Build, test, publish, and repair loops were not exercised. |
-| Shared skill discovery | On 2026-10-02, folder import of the PR #2 candidate on macOS / Kiro 1.1.70 showed exactly `connect-n8n`, `build-workflow` and `debug-execution`; none of the 14 nested official skills appeared as extra entries. The temporary import was removed afterward. `Try power` required an open workspace, so reference-loading and build/debug behavior remain unverified. |
 | Installed reference reads | On 2026-10-08, a fresh folder import of `78e9629` as an isolated `n8n-acceptance` power exposed exactly three entry skills. All 71 installed skill/helper/reference files matched the candidate. Kiro discovered the installed path without being given it and read the bundled router, lifecycle, node-configuration, expressions and Code-node guides during a real native MCP build. |
 | Follow-up reference reuse | The wrong-output repair loaded only the debug entry skill and bundled debugging guide. The runtime-error repair read no new guidance. The earlier router and specialists were reused; unrelated guides and setup/recovery documentation stayed unloaded during the workflow tasks. |
-| Power update and reinstall | On 2026-10-08, Kiro installed a local candidate update, then uninstalled and reinstalled the isolated test power. Exactly three entry skills remained; all 71 installed skill/helper/reference files matched the candidate. Workspace MCP configuration and the helper registry stayed byte-for-byte unchanged. |
-| Restart persistence | After the power reinstall, Kiro was fully quit and relaunched. Native `get_workflow_details` succeeded with the saved OAuth grant, without new consent or registration, and confirmed the unpublished two-node draft and correct formula. |
-| Helper invocation in Kiro | The updated installed helper detected 1.2.37 and reused the registration with `changed: false` from the normal shell. Inside Kiro, even `node --version` returned no output and exit -1; a proposed path-variation retry was denied. Agent-terminal onboarding remains unverified. |
-| Compaction attempt | On Kiro 1.2.4, `/compact` produced an ordinary assistant summary; the context meter increased and no compaction event was visible. Reloading missing guidance after actual compaction is still unverified. |
-| Kiro compatibility | Setup accepts exact versions 1.1.70, 1.2.4 and 1.2.37; tests cover detected-version setup and registration reuse after upgrading. Unknown and prerelease versions remain rejected. A normal IDE restart installed a pending 1.2.37 update during acceptance; native OAuth and workflow results below are from 1.2.37. |
-| Imported guidance audit | All 13 content comments on PR #2 were confirmed on 2026-10-02: eight by running the exact examples or n8n 2.41.0's built validators/execution engine, and five by checking the pinned text and reference paths. On 2026-10-08, local corrections fixed the examples and guidance without modifying `n8n-io/skills`; regression tests execute both bundled validators and the per-item Code example. Sync now verifies the locked upstream files plus the reviewed patch and rejects conflicting updates. |
-| Native workflow acceptance | Kiro 1.2.37 / macOS 27.0.1 / Node 24.19.0 against localhost n8n 2.42.0 development (`a4b87fccbe`), without changes to its OAuth implementation. The user granted workflow read/write/execute and execution read; the native connection exposed 59 tools and completed an authenticated read. Kiro created an unpublished Manual Trigger → Code workflow through live MCP schemas and completed the five executions below. No workflow operation used REST or an externally supplied schema. |
+| Update, reinstall and restart | On 2026-10-08, Kiro updated, uninstalled and reinstalled the isolated test power. Exactly three entry skills remained; all 71 installed skill/helper/reference files matched. Workspace MCP configuration and the helper registry stayed byte-for-byte unchanged. After a full IDE restart, native `get_workflow_details` succeeded with the saved grant, without new consent or registration, and confirmed the repaired unpublished draft. |
+| Installed helper from the normal shell | The updated installed helper detected Kiro 1.2.37 and reused the registration with `changed: false`. Invocation from Kiro's agent terminal remains unverified; see the limitation below. |
 
 ### Native workflow results (2026-10-08)
 
-Synthetic workflow `5ZIkSrjTdfhJEQdT` remained unpublished. Only its arithmetic
-Code node ran; no credentials or external integrations were involved.
+Environment: Kiro 1.2.37 / macOS 27.0.1 / Node 24.19.0 against local n8n 2.42.0
+development (`a4b87fccbe`), without changes to its OAuth implementation. The user
+granted workflow read/write/execute and execution read.
+
+Kiro created synthetic workflow `5ZIkSrjTdfhJEQdT` through native MCP using live
+tool schemas. It remained unpublished and contained a Manual Trigger and an
+arithmetic Code node, with no credentials or external integrations. No workflow
+operation used REST or an externally supplied schema.
 
 | Execution | Expected test | Observed result |
 | --- | --- | --- |
@@ -51,19 +51,18 @@ execution. The cause of the omission is not established. The verified fallback
 was the live `execute_workflow` tool with `executionMode: "manual"`, followed by
 `get_workflow_execution` with data. The connection skill now describes this path
 and requires reviewing pins and real effects; it must not publish to bypass a
-failure. One validation call also supplied an array as a string, and one update
-used a version name over 80 characters; corrected retries passed.
+failure. Pinned testing is not recorded as passing.
 
 The detailed September 25–28 investigation and test records are preserved at
 [the reviewed commit](https://github.com/n8n-io/n8n-kiro-power/tree/20f9df620045dd0418e78f52459a5e2a413f6013/docs).
 Their packaging statements describe those experiments, not the current package.
 
-Known client issues: older Kiro sessions corrupted long terminal commands; the
-1.2.37 check above failed even for `node --version`. Setup can use the normal
-terminal, but automatic agent-terminal onboarding is not established. Kiro also
-had transient MCP and own-auth/model timeouts during this run while local n8n
-remained healthy; restarting Kiro cleared them. These are limits of the observed
-client session, not evidence of an n8n OAuth failure.
+Known client issues: Kiro 1.2.37 returned no output and exit -1 even for
+`node --version`; older sessions corrupted long terminal commands. Setup can use
+the normal terminal, but automatic agent-terminal onboarding is not established.
+Kiro also had transient MCP and own-auth/model timeouts during this run while
+local n8n remained healthy; restarting Kiro cleared them. These are limits of the
+observed client session, not evidence of an n8n OAuth failure.
 
 ## Acceptance gates
 
@@ -71,46 +70,49 @@ Use a development instance and synthetic data. Record the candidate commit,
 Kiro/OS/n8n versions, hosting model, result, and any skipped checks. Keep tokens,
 passwords, and private payloads out of evidence.
 
-- [ ] **Installed onboarding:** import the power from a clean folder/GitHub
-      installation, invoke its installed helper with Node available to Kiro,
-      authorize, and verify a read without editing JSON or copying a token.
-- [ ] **Supported servers:** complete public OAuth and MCP operations on Cloud
-      and a released self-hosted n8n version without the Basic-authentication
-      patch. Establish the oldest verified release.
-- [x] **Core workflow acceptance:** create a draft, run it, introduce wrong output
-      and an execution error, inspect the relevant runs, repair, and rerun through
-      native MCP without an externally supplied schema. Confirm final outputs.
-      For the shared-skills adapter, confirm Kiro reads the bundled router and
-      relevant capability/reference files without relying on another agent's
-      Skill tool or session hooks; repeat this on a clean power installation.
-      Confirm only the three entry skills are exposed. Record files read during
-      a simple build and follow-up debug task: setup/recovery and unrelated
-      guides should stay unloaded, and guidance still in context should be
-      reused. The native manual-execution fallback and its limits are recorded above.
+- [x] **Local connection:** fresh folder import, installed helper run from the
+      normal shell, OAuth consent and authenticated native read, without editing
+      JSON or copying a token.
+- [x] **Core workflow acceptance:** create and run a draft, inspect and repair
+      wrong output and a runtime error, and confirm the final outputs through
+      native MCP. Kiro automatically found the bundled guides, exposed only the
+      three entry skills, and reused relevant guidance during follow-up work.
+      The manual-execution fallback and its limits are recorded above.
+- [x] **Local update/reinstall and restart:** preserve the workspace connection
+      and settings, and verify a read after a full IDE restart without new consent
+      or another registration.
+- [ ] **Public repository import:** clean installation from the GitHub repository
+      URL at the release commit, followed by connection setup and a native read.
+- [ ] **Agent-terminal onboarding:** invoke the installed helper successfully
+      from Kiro's agent terminal with Node available in its environment.
+- [ ] **Supported servers:** complete public OAuth and workflow operations on
+      Cloud and a released self-hosted n8n version without the Basic-authentication
+      patch. Establish the oldest verified release; the Cloud read alone does not
+      complete this gate.
 - [ ] **Context recovery:** after actual compaction, verify missing guidance is
-      loaded again; an ordinary assistant summary does not establish this.
+      loaded again. The Kiro 1.2.4 `/compact` attempt produced an ordinary assistant
+      summary, with no visible compaction event.
 - [ ] **Access and effects:** respect a read-only grant and unavailable workflows;
       distinguish simulated data from real integrations and obtain authorization
       for actual external effects. Do not publish a workflow merely to test it.
-- [ ] **Connection lifecycle:** verify user settings across projects, full IDE
-      restart, token expiry/revocation, and replacement-registration refresh.
-      Verify Kiro on each platform claimed as supported.
-- [x] **Local update/reinstall:** update and reinstall the skills-only power,
-      preserve the native connection and settings, and verify a read after a full
-      IDE restart without another registration.
+- [ ] **Remaining connection lifecycle:** verify user settings across projects,
+      token expiry/revocation and replacement-registration refresh with the
+      installed package. Earlier experiments do not complete this gate.
+- [ ] **IDE platform coverage:** verify Kiro on each platform claimed as supported;
+      cross-platform helper CI does not replace these tests.
 - [ ] **Legacy migration:** verify removal of old bundled duplicates without
       disturbing separately managed OAuth or token connections.
 
 ## Release order
 
-1. [Power PR #1](https://github.com/n8n-io/n8n-kiro-power/pull/1) is merged.
-   Complete acceptance and review [shared-skills PR #2](https://github.com/n8n-io/n8n-kiro-power/pull/2),
-   merge it to `main`, then verify a clean import of the public repository URL at
-   the merged commit. There is no npm publication or hosted service deployment.
+1. Complete the remaining acceptance checks above against the release commit on
+   `main`, including a clean import of the public repository URL. PR #2 is already
+   merged. There is no npm publication or hosted service deployment.
 2. Confirm the maintainer, durable monitored email, and authorized submitter.
    Have that representative review and accept the publisher terms.
 3. Check the [current submission requirements](https://kiro.dev/powers/submit/)
-   and submit the public repository URL.
+   and submit the public repository URL. Record the submission date and outcome;
+   submission or listing approval is not yet recorded in this checklist.
 
 [n8n PR #39637](https://github.com/n8n-io/n8n/pull/39637) separately fixes HTTP
 Basic client authentication. Public-client OAuth does not require that PR or a
