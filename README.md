@@ -1,10 +1,11 @@
-# n8n power for Kiro
+# n8n Workflow Dev for Kiro
 
 Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Status: draft candidate.** Public-client OAuth is verified end to end against
+**Status: release validation incomplete; registry review pending.** The power's
+identifier is `n8n-workflow-dev`. Public-client OAuth is verified end to end against
 both a local and a cloud instance, from an installed power, through Kiro
 authorization to a successful workflow read. Local native MCP acceptance also
 passed draft creation, execution, wrong-output repair and runtime-error repair
@@ -17,7 +18,7 @@ manual execution was verified as a fallback. Broader release gates remain in the
 - **Kiro IDE 1.1.70, 1.2.4 or 1.2.37**, in a local session; see the release checklist for live validation.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
-  version floor; local live testing used n8n 2.41.0 and 2.42.0 development.
+  version floor; see the release checklist for tested server versions.
 - An owner/admin must enable **Settings > Instance-level MCP**. Workflow builder
   tools must also be enabled; self-hosted admins can disable them with
   `N8N_MCP_BUILDER_ENABLED=false`.
@@ -25,15 +26,21 @@ manual execution was verified as a fallback. Broader release gates remain in the
   access for inspection, execution, or editing. Search previews may include
   workflows that have not been exposed.
 
-The power covers workflows, including AI Agent nodes. Standalone n8n Agents
-are a separate Preview feature and are outside this release.
+Instance-level MCP is generally available: see the
+[n8n 2.31 release notes](https://docs.n8n.io/changelog/release-notes/#n8n231)
+and [the GA change](https://github.com/n8n-io/n8n/pull/34084).
+The power uses the [workflow management and builder tools](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference/),
+including workflows containing AI Agent nodes. Standalone n8n Agents are a
+separate Preview feature and are outside this release. GA status does not
+establish the oldest n8n release compatible with this power's OAuth setup.
 
 ## Install and connect
 
-1. For this draft, check out PR #2's `codex/shared-skills-sync` branch. In **Kiro > Powers >
-   Add Custom Power > Import power from a folder**, select the directory
-   containing `plugin.json`. GitHub installation from the repository URL becomes
-   the release path after the package is merged to `main`.
+1. In **Kiro > Powers > Add Custom Power > Import power from GitHub**, enter
+   `https://github.com/n8n-io/n8n-kiro-power`. Kiro reads the default branch;
+   no checkout of a PR branch is required. For an unmerged candidate, use
+   **Import power from a folder** and select the directory containing its
+   `plugin.json`.
 2. Ask Kiro to connect to n8n and give it your instance base URL or full MCP URL.
    The connection skill runs the bundled helper. No npm install, token copying,
    or JSON editing is needed on this path.
