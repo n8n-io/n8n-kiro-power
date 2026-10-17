@@ -1,7 +1,7 @@
 ---
 name: build-workflow
 description: "Build or change an n8n workflow using the code in the workspace. Use for automation, scheduled jobs, webhooks, or connecting n8n to the application in this repository."
-compatibility: Requires Kiro with Agent Plugins support and n8n 2.34.0 or later with workflow builder tools enabled.
+compatibility: Requires local Kiro on macOS with Agent Plugins support and n8n 2.34.0 or later with workflow builder tools enabled.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -11,10 +11,14 @@ metadata:
 
 Apply [connect-n8n](../connect-n8n/SKILL.md), including its loading policy and
 execution checks. Keep operations on that verified native connection.
-Load the [shared router](../connect-n8n/references/n8n-skills/skills/using-n8n-skills-official/SKILL.md)
+Read the [shared router](../connect-n8n/references/n8n-skills/skills/using-n8n-skills-official/SKILL.md)
 and [workflow lifecycle](../connect-n8n/references/n8n-skills/skills/n8n-workflow-lifecycle-official/SKILL.md)
-when absent from context. They own workflow procedure, specialist routing,
-validation, testing and handoff.
+with Kiro's file-reading tool each time this entry is loaded, before workflow
+operations. Reading this entry does not load those files. Do not skip these two
+reads because an earlier turn or a context summary says they were loaded.
+After these reads, reuse their contents for subsequent operations until this
+entry is loaded again or context compaction removes them.
+They own workflow procedure, specialist routing, validation, testing and handoff.
 
 ## Apply the editor context
 

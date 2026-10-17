@@ -1,7 +1,7 @@
 ---
 name: debug-execution
 description: "Diagnose an n8n workflow that failed, produced the wrong result, or stopped running. Use for execution errors, unexpected output, intermittent failures, and workflow repairs."
-compatibility: Requires Kiro with Agent Plugins support and n8n 2.34.0 or later with execution read access.
+compatibility: Requires local Kiro on macOS with Agent Plugins support and n8n 2.34.0 or later with execution read access.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -11,9 +11,13 @@ metadata:
 
 Apply [connect-n8n](../connect-n8n/SKILL.md), including its loading policy and
 execution checks. Keep investigation and repair on that verified connection.
-Load the [shared router](../connect-n8n/references/n8n-skills/skills/using-n8n-skills-official/SKILL.md)
+Read the [shared router](../connect-n8n/references/n8n-skills/skills/using-n8n-skills-official/SKILL.md)
 and [debugging guide](../connect-n8n/references/n8n-skills/skills/n8n-debugging-official/SKILL.md)
-when absent from context, before workflow investigation calls.
+with Kiro's file-reading tool each time this entry is loaded, before workflow
+investigation. Reading this entry does not load those files. Do not skip these
+two reads because an earlier turn or a context summary says they were loaded.
+After these reads, reuse their contents for subsequent operations until this
+entry is loaded again or context compaction removes them.
 
 ## Ground the shared investigation in the actual run
 

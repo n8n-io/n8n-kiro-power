@@ -21,7 +21,8 @@ Cross-origin identity providers and redirects are unsupported.
 
 Check `node --version`: Node.js 22+ must be available in Kiro's environment.
 Explain a missing runtime; do not install one automatically. Setup currently
-accepts Kiro IDE 1.1.70, 1.2.4 and 1.2.37. If detection fails, check Help > About and pass the
+accepts Kiro IDE 1.1.70, 1.2.4 and 1.2.37; the initial release supports macOS only.
+If detection fails, check Help > About and pass the
 actual version with `--kiro-version`; never supply an older version to bypass it.
 
 For an installed power, resolve `scripts/setup.mjs` relative to the installed
@@ -100,9 +101,16 @@ browser request. After consent, repeat the connection skill's read-only prefligh
 - **Invalid client:** if its server-side registration was removed, use
   `repair --new-registration` and authenticate again. Review unused grants in
   n8n; the helper does not revoke them.
+  If Kiro still opens authorization for the previous client after repair, save
+  your work and run **Developer: Reload Window** before authenticating again.
+  Do not create another registration while Kiro is still using stale settings.
 - **Callback collision:** a listening port may belong to Kiro. For a confirmed
   conflict, use `repair --callback-port 5694` with an available allowed port,
   then authenticate the replacement client. Do not weaken instance callback policy.
+  If two Kiro windows share the same user-scoped connection, changing its port
+  changes both windows and can repeat the collision. Complete setup with one
+  window, or use separate workspace-scoped registrations for concurrent projects.
+  Give each workspace connection a distinct `--name`; preserve unrelated entries.
 - **Uncertain registration:** the request may have reached n8n. Consult the
   administrator before explicitly retrying with `repair --new-registration`.
   An unconsented registration may not appear in Connected clients.

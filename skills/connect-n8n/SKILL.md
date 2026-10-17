@@ -1,7 +1,7 @@
 ---
 name: connect-n8n
-description: "Set up and verify the n8n MCP connection before using n8n tools. Run on the first turn touching n8n, or when tools are missing, OAuth fails, a request times out, or the user asks to connect a new instance. Uses a bundled public-client OAuth setup helper and Kiro's native MCP settings."
-compatibility: Setup requires Node.js 22+, local Kiro IDE 1.1.70, 1.2.4 or 1.2.37, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; live local public-OAuth tests used n8n 2.41.0 and 2.42.0 development.
+description: "Set up and verify the n8n MCP connection before using n8n tools. Run on the first turn touching n8n, when resuming from a context summary, or when tools are missing, OAuth fails, a request times out, or the instance changes. Uses public-client OAuth and Kiro's native MCP settings."
+compatibility: Setup requires macOS, Node.js 22+, local Kiro IDE 1.1.70, 1.2.4 or 1.2.37, and instance-level MCP enabled. Workflow skills use n8n 2.34.0+ tool names; see the release checklist for verified server versions.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -25,6 +25,11 @@ failures. Reuse a verified connection for subsequent operations.
    Never probe with a write. Settings, a browser success page and tool counts
    alone do not prove an authenticated read or an empty instance.
 
+Keep workflow-level permissions separate from the OAuth grant. A workflow's
+returned `scopes` can describe the user's permissions; they do not prove that
+this connection can write. Respect the consented OAuth scopes and advertised
+tools, and never switch connections to bypass a missing permission.
+
 If setup is needed, read [Commands and Authorization](../../docs/setup-helper.md#commands)
 before configuring anything. For failures or missing tools/workflows, read the
 relevant [Troubleshooting](../../docs/setup-helper.md#troubleshooting) entry.
@@ -39,12 +44,24 @@ Resolve shared names to `references/n8n-skills/skills/<name>/SKILL.md` relative
 to this installed skill; resolve each reference relative to its owning file.
 These are local references, with no separate plugin or upstream session/tool hooks.
 
-In Kiro, invoking a shared skill means applying its guidance. Read its file with
-Kiro's file-reading capability when the contents are absent from active context.
-Load the router and each relevant guide on first use, then reuse their contents.
+If Kiro does not supply the installed path, look under
+`~/.kiro/powers/installed/` and match `plugin.json`'s `name` to
+`n8n-workflow-dev`. The directory may be named after the GitHub repository.
+Do not use the checkout cache under `~/.kiro/powers/repos/` or another installed
+power to resolve these references.
+
+In Kiro, invoking a shared skill means applying its guidance. Each time a
+build/debug entry is loaded, read the router and core guide named in that entry
+with Kiro's file-reading capability. These two reads are required even if an
+earlier turn or context summary says the guides were loaded. Load other relevant
+guides on first use, then reuse their contents for subsequent operations.
 Re-read if context compaction removed them, the installed snapshot changed, or a
-needed rule is unclear. This policy takes precedence over shared instructions to
-invoke or re-read a skill on every operation. Still apply the relevant rules on
+needed rule is unclear. A context summary naming a guide or saying it was loaded
+does not contain that guide's rules. When resuming from a summary, re-read this
+entry and the router/task guides whose full contents are missing before workflow
+operations; do not wait for a separate compaction notification.
+This policy takes precedence over shared instructions to invoke or re-read a
+skill on every operation. Still apply the relevant rules on
 every operation; this does not cache live workflow state or verification results.
 
 Follow the router's triggers to load specialists as the task needs them. Do not
@@ -67,7 +84,7 @@ fields are missing, report the limitation and stop that operation; do not guess
 arguments or switch to the n8n REST API for workflow operations.
 
 If Kiro repeatedly omits required `pinData` from `test_workflow`, stop retrying
-that tool and report pinned testing as unavailable. When its live schema supports
+that tool and report pinned testing as unavailable for that attempt. When its live schema supports
 `manual` execution, `execute_workflow` can run the draft instead. Apply the graph,
 pin and effects checks below: this path can run real integrations and needs
 authorization for their effects. Do not publish a workflow to bypass the failure.
@@ -76,6 +93,8 @@ Before each test, inspect the current pin map and unpinned nodes, including Code
 I/O, commands, file operations and sub-workflows. Obtain authorization for real
 effects unless already authorized. Read the final result; an execution ID alone
 is not success. Report simulated nodes; a simulated pass leaves those integrations
-unverified. Distinguish an edited draft from published behavior. Publish only when
+unverified. Identify pins from the execution's pin data; an empty trigger output
+or zero-duration node does not prove it was simulated.
+Distinguish an edited draft from published behavior. Publish only when
 authorized for that workflow. Check effects before changing settings on a published workflow because
 the change can reactivate it. These checks apply alongside the shared guidance.

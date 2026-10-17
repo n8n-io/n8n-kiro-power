@@ -4,18 +4,20 @@ Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Status: release validation incomplete; registry review pending.** The power's
-identifier is `n8n-workflow-dev`. Public-client OAuth is verified end to end against
-both a local and a cloud instance, from an installed power, through Kiro
-authorization to a successful workflow read. Local native MCP acceptance also
-passed draft creation, execution, wrong-output repair and runtime-error repair
-on Kiro 1.2.37. Pinned testing failed when tool calls omitted required data;
-manual execution was verified as a fallback. Broader release gates remain in the
+**Status: candidate acceptance passed; final release import and registry review pending.** The power's
+identifier is `n8n-workflow-dev`. On Kiro 1.2.37, the installed power passed public
+OAuth, native reads, draft creation, execution, wrong-output repair and runtime-error
+repair on released self-hosted n8n 2.43.7 and Cloud 2.43.5. Some calls omitted
+required pin data; guarded manual execution passed as a fallback. A separate
+HTTP-pinned simulation passed with the required arguments intact.
+The remaining release gates and test limits are recorded in the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements
 
-- **Kiro IDE 1.1.70, 1.2.4 or 1.2.37**, in a local session; see the release checklist for live validation.
+- **Kiro IDE 1.1.70, 1.2.4 or 1.2.37 on macOS**, in a local session; see the
+  release checklist for live validation. The initial release supports macOS only.
+  Windows and Linux helper checks run in CI, but their IDE flows are not verified.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
   version floor; see the release checklist for tested server versions.
