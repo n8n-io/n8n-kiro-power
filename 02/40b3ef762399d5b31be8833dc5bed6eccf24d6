@@ -1,0 +1,52 @@
+docs/release-checklist.md
+  s_99430064d5fc8e::t_91bed402174e9c 33,46-48
+  s_99430064d5fc8e::t_6a240e64619b2e 21
+  s_99430064d5fc8e::t_0212f883f40382 24
+  s_99430064d5fc8e::t_82468a46929897 34,72-73,120-121,126,129-131
+  s_99430064d5fc8e::t_a5166790a8b867 35,142-144
+  s_99430064d5fc8e::t_7fae7296bb230b 9-10,138-141
+  s_99430064d5fc8e::t_8330d3b57cc7e2 32
+  s_99430064d5fc8e::t_90f1ccb74fdbc9 3,20,27,36,122-125
+  s_99430064d5fc8e::t_1b560fb15a3d2c 25,116,118-119
+  s_99430064d5fc8e::t_f9979e1ebfcc9c 31,134,136-137
+  s_99430064d5fc8e::t_f6cb61e9e3dbda 30,41-45,132-133,135
+skills/build-workflow/SKILL.md
+  s_99430064d5fc8e::t_84758972f6fdda 4
+  s_99430064d5fc8e::t_68c4a52b927972 16-20
+  s_99430064d5fc8e::t_54201d507dffa8 14,21
+README.md
+  s_99430064d5fc8e::t_90f1ccb74fdbc9 7
+  s_99430064d5fc8e::t_ab1662a77888c3 10-12
+  s_99430064d5fc8e::t_08bd4818408a5f 8-9,13
+  s_99430064d5fc8e::t_7fae7296bb230b 18-20
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_84758972f6fdda 3-4,59-62
+  s_99430064d5fc8e::t_46c51cb3e0fd42 28-32
+  s_99430064d5fc8e::t_68c4a52b927972 53-57,63-64
+  s_99430064d5fc8e::t_8d164dd27f632f 47-52
+  s_99430064d5fc8e::t_5f434b8a774871 87,96-98
+skills/debug-execution/SKILL.md
+  s_99430064d5fc8e::t_84758972f6fdda 4
+  s_99430064d5fc8e::t_54201d507dffa8 14
+  s_99430064d5fc8e::t_68c4a52b927972 16-20
+docs/setup-helper.md
+  s_99430064d5fc8e::t_222bb6bdd8aaef 24-25
+  s_99430064d5fc8e::t_22083ac4448b8c 104-106
+  s_99430064d5fc8e::t_324de18f0328da 110-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "0240b3ef762399d5b31be8833dc5bed6eccf24d6",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
