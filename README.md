@@ -4,7 +4,7 @@ Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Status: candidate acceptance passed; final release import and registry review pending.** The power's
+**Status: candidate acceptance passed; final release import pending; not yet submitted to the registry.** The power's
 identifier is `n8n-workflow-dev`. On Kiro 1.2.37, the installed power passed public
 OAuth, native reads, draft creation, execution, wrong-output repair and runtime-error
 repair on released self-hosted n8n 2.43.7 and Cloud 2.43.5. Some calls omitted

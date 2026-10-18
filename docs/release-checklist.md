@@ -1,6 +1,6 @@
 # Release checklist
 
-**Status: candidate acceptance passed; final release import and registry review pending.** Last reviewed 2026-10-16.
+**Status: candidate acceptance passed; final release import pending; not yet submitted to the registry.** Last reviewed 2026-10-18; native acceptance run 2026-10-16.
 [PR #2](https://github.com/n8n-io/n8n-kiro-power/pull/2) merged on 2026-10-08
 as `65bff7a`. The remaining acceptance checks and submission steps are below.
 The [setup guide](setup-helper.md) describes the implemented commands.

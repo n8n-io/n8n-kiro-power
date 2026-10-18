@@ -109,8 +109,22 @@ browser request. After consent, repeat the connection skill's read-only prefligh
   then authenticate the replacement client. Do not weaken instance callback policy.
   If two Kiro windows share the same user-scoped connection, changing its port
   changes both windows and can repeat the collision. Complete setup with one
-  window, or use separate workspace-scoped registrations for concurrent projects.
-  Give each workspace connection a distinct `--name`; preserve unrelated entries.
+  window. For concurrent projects, configure separate workspace-scoped
+  registrations with distinct names and callback ports. Verify each replacement
+  with a native read, using one window at a time.
+  Kiro merges user and workspace settings, so distinct names leave the original
+  user entry active. After verifying the replacements, remove only the old
+  helper-managed user entry using its original URL and server name:
+
+  ```sh
+  node skills/connect-n8n/scripts/setup.mjs remove --url "<your n8n URL>" --name "<old user server name>" --scope user
+  ```
+
+  This removes that inherited connection from every project; migrate any other
+  projects that still need it first. Preserve unrelated entries and follow
+  [configuration safety](#configuration-safety-and-removal) if removal reports a
+  conflict. Reload the affected Kiro windows and verify native reads through
+  both workspace connections while the windows are open together.
 - **Uncertain registration:** the request may have reached n8n. Consult the
   administrator before explicitly retrying with `repair --new-registration`.
   An unconsented registration may not appear in Connected clients.
