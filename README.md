@@ -10,8 +10,9 @@ OAuth, native reads, draft creation, execution, wrong-output repair and runtime-
 repair on released self-hosted n8n 2.43.7 and Cloud 2.43.5. Some calls omitted
 required pin data; guarded manual execution passed as a fallback. A separate
 HTTP-pinned simulation passed with the required arguments intact.
-Repository validation passed on the merged release. The final post-merge native
-import check remains pending; its scope and the test limits are recorded in the
+Repository validation, a clean GitHub import and installed-helper setup passed
+on the merged release. Kiro's account usage limit blocked the final native read;
+the result and test limits are recorded in the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements

@@ -1,6 +1,6 @@
 # Release checklist
 
-**Status: release package merged; repository validation passed; final native import pending.** Last reviewed 2026-10-19; native acceptance run 2026-10-16.
+**Status: release import and setup verified; final native read blocked by Kiro's account usage limit.** Last reviewed 2026-10-19; full workflow acceptance run 2026-10-16.
 [PR #3](https://github.com/n8n-io/n8n-kiro-power/pull/3) merged on 2026-10-19
 as `f807c6f`, including the final name, description and guidance fixes.
 The [setup guide](setup-helper.md) describes the implemented commands.
@@ -16,9 +16,10 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | Check | Evidence and limits |
 | --- | --- |
 | MCP GA status | The [n8n 2.31 release notes](https://docs.n8n.io/changelog/release-notes/#n8n231), released 2026-07-14, explicitly identify instance-level MCP as generally available; [PR #34084](https://github.com/n8n-io/n8n/pull/34084), merged 2026-07-13, removed its Preview label for that reason. The current [tool reference](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference/) documents workflow management and builder tools separately from standalone agent management, which remains Preview and is outside this power's scope. GA status is separate from the power's version compatibility and acceptance checks. |
-| Public repository import | On 2026-10-16, stable Kiro 1.2.37 on macOS 27.0.1 imported `https://github.com/n8n-io/n8n-kiro-power` directly through **Import power from GitHub**, without a checkout or branch override. It exposed exactly three entry skills, and all 71 installed skill/helper/reference files matched `main` at `65bff7a`. Activation loaded the connection skill. This tested the existing `n8n` metadata; the renamed release still needs a post-merge import and connection check. |
+| Public repository import | On 2026-10-19, the earlier GitHub and folder test installations were uninstalled through Kiro 1.2.37, then `https://github.com/n8n-io/n8n-kiro-power` was imported through **Import power from GitHub**, without a checkout or branch override. Kiro displayed `n8n-workflow-dev`, the benefit-first description and exactly three entry skills. All 72 installed manifest/skill/helper/reference files matched public `main` at `f807c6f` (version 1.0.1). The October 16 import of `65bff7a` had separately passed skill activation, setup and a native read. |
+| Final release connection | On 2026-10-19, the freshly GitHub-installed helper ran `configure` against the existing user-scoped Cloud connection with the actual running Kiro version, 1.2.37. It returned `registration: reused` and `changed: false`; no new registration or consent was created. Kiro displayed **Connected (55 tools)**. Both **Try power** and the explicit native-read request stopped before any agent/tool execution because the Kiro account had reached its monthly usage limit. The installed helper was therefore run from the normal shell. The final workflow read is unverified; connection status and tool discovery do not substitute for it. |
 | Candidate metadata | On 2026-10-16, a separate folder import displayed `n8n-workflow-dev`, the 74-character benefit-first description, and exactly three entry skills in Kiro 1.2.37. Subsequent GUI updates installed the revised candidate; all three installed entry files matched the working tree before the final context-recovery test. |
-| Merged release package | On 2026-10-19, the public archive of `f807c6f` was downloaded without GitHub authentication and checked in a clean directory. Its repository tree exactly matches reviewed candidate `b86b94e`. `npm ci --ignore-scripts` and `npm run check` passed: all 66 tests, bundle reproducibility, manifest, bundled references, Markdown links and documented commands. This verifies the public package; it does not replace the final native import/read check. |
+| Merged release package | On 2026-10-19, the public archive of `f807c6f` was downloaded without GitHub authentication and checked in a clean directory. Its repository tree exactly matches reviewed candidate `b86b94e`. `npm ci --ignore-scripts` and `npm run check` passed: all 66 tests, bundle reproducibility, manifest, bundled references, Markdown links and documented commands. Native import and setup also passed as recorded above; the account-limited native read remains unverified. |
 | Automated checks | All [eight validation jobs](https://github.com/n8n-io/n8n-kiro-power/actions/runs/39245374146) passed on merged release `f807c6f`: Node 22/24 on macOS, Linux and Windows, plus manifest and shared-snapshot checks. The clean-archive check also passed on macOS / Node 24.19.0. Helper CI does not establish IDE support on every OS. |
 | Validator runtime | Both bundled validators and their full error-response expressions passed checks with the local n8n 2.43.0 expression runtime, including scalar bodies, invalid tags, unknown fields and a `__proto__` key. This was a separate expression-runtime check, not a live workflow test. |
 | Local public OAuth | On 2026-09-28, Kiro 1.1.70 completed S256 PKCE consent with a helper-created public client and called `search_workflows` on local n8n 2.41.0 development without the Basic-authentication patch. The 2026-10-08 installed-power test completed OAuth and a native read on Kiro 1.2.37 / local n8n 2.42.0 development. |
@@ -111,10 +112,12 @@ passwords, and private payloads out of evidence.
       The October 16 test reused an existing grant; no PR checkout was needed.
 - [x] **Merged repository package:** verify the public release archive and CI
       against `f807c6f`, including the final metadata and shared-guide fixes.
-- [ ] **Final release import and connection:** repeat the GitHub URL import of
-      merged release `f807c6f` on a supported Kiro version, followed by connection
-      setup and a native read. This was not completed in the October 19
-      repository-only preparation; earlier candidate acceptance remains recorded above.
+- [ ] **Final release import and connection:** the clean GitHub URL import of
+      merged release `f807c6f`, installed-file comparison and helper setup passed
+      on Kiro 1.2.37 on October 19. Only the native workflow read remains: Kiro
+      rejected the request because the test account's monthly usage allowance
+      was exhausted, before invoking any tool. Restore account usage and repeat
+      that read through the existing Cloud connection; no new setup is needed.
 - [x] **Agent-terminal setup:** invoke the installed helper successfully
       from Kiro's agent terminal with Node available in its environment.
 - [x] **Supported servers:** complete public OAuth and workflow operations on
@@ -150,8 +153,9 @@ passwords, and private payloads out of evidence.
 ## Publication
 
 The release package is available from the public repository's default branch.
-There is no npm publication or hosted service deployment. The remaining native
-smoke test is recorded above; newer Kiro compatibility is outside this release.
+There is no npm publication or hosted service deployment. The final native read
+is blocked by the test account's Kiro usage allowance, as recorded above;
+newer Kiro compatibility is outside this release.
 
 The maintainer confirmed on 2026-10-19 that submission is handled separately.
 Submission details, publisher terms and registry approval are owned by that
