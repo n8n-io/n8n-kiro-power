@@ -1,0 +1,31 @@
+docs/release-checklist.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 3-5,9-10,18-25,27-36,40-53,72-73,79-85,93-126,129-144,148-151,155-156,164-165
+skills/build-workflow/SKILL.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 4,14,16-21
+docs/setup-helper.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 24-25,104-106,110-127
+README.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 1,7-13,18-20,23,31-37,41-45
+skills/connect-n8n/SKILL.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 3-4,28-32,47-57,59-64,87,96-98
+skills/debug-execution/SKILL.md
+  s_99430064d5fc8e::t_cea922b2e2afa8 4,14,16-20
+plugin.json
+  ai_agent 3,5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "5e3bdfe1c5a995261a903353a3a251a039804db2",
+  "prompts": {},
+  "sessions": {
+    "s_99430064d5fc8e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0d818-dbc7-7ec1-8774-11ad771941d1",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
