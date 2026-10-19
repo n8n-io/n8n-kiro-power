@@ -4,19 +4,21 @@ Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Status: candidate acceptance passed; final release import pending; not yet submitted to the registry.** The power's
+**Release package: 1.0.1 is available on `main`.** The power's
 identifier is `n8n-workflow-dev`. On Kiro 1.2.37, the installed power passed public
 OAuth, native reads, draft creation, execution, wrong-output repair and runtime-error
 repair on released self-hosted n8n 2.43.7 and Cloud 2.43.5. Some calls omitted
 required pin data; guarded manual execution passed as a fallback. A separate
 HTTP-pinned simulation passed with the required arguments intact.
-The remaining release gates and test limits are recorded in the
+Repository validation passed on the merged release. The final post-merge native
+import check remains pending; its scope and the test limits are recorded in the
 [release checklist](docs/release-checklist.md).
 
 ## Requirements
 
 - **Kiro IDE 1.1.70, 1.2.4 or 1.2.37 on macOS**, in a local session; see the
   release checklist for live validation. The initial release supports macOS only.
+  Newer Kiro versions are outside this release's supported range.
   Windows and Linux helper checks run in CI, but their IDE flows are not verified.
 - **Node.js 22+**, available to commands run by Kiro.
 - **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
@@ -40,9 +42,7 @@ establish the oldest n8n release compatible with this power's OAuth setup.
 
 1. In **Kiro > Powers > Add Custom Power > Import power from GitHub**, enter
    `https://github.com/n8n-io/n8n-kiro-power`. Kiro reads the default branch;
-   no checkout of a PR branch is required. For an unmerged candidate, use
-   **Import power from a folder** and select the directory containing its
-   `plugin.json`.
+   no checkout of a PR branch is required.
 2. Ask Kiro to connect to n8n and give it your instance base URL or full MCP URL.
    The connection skill runs the bundled helper. No npm install, token copying,
    or JSON editing is needed on this path.

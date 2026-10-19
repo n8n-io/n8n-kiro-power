@@ -1,13 +1,13 @@
 # Release checklist
 
-**Status: candidate acceptance passed; final release import pending; not yet submitted to the registry.** Last reviewed 2026-10-18; native acceptance run 2026-10-16.
-[PR #2](https://github.com/n8n-io/n8n-kiro-power/pull/2) merged on 2026-10-08
-as `65bff7a`. The remaining acceptance checks and submission steps are below.
+**Status: release package merged; repository validation passed; final native import pending.** Last reviewed 2026-10-19; native acceptance run 2026-10-16.
+[PR #3](https://github.com/n8n-io/n8n-kiro-power/pull/3) merged on 2026-10-19
+as `f807c6f`, including the final name, description and guidance fixes.
 The [setup guide](setup-helper.md) describes the implemented commands.
 The package contains skills and a bundled helper; it ships no root `mcp.json`.
 
 The initial release supports macOS only. Setup accepts local Kiro IDE 1.1.70,
-1.2.4 and 1.2.37 with Node.js 22+;
+1.2.4 and 1.2.37 with Node.js 22+. Support for newer Kiro versions is deferred;
 version-specific live validation is recorded below. n8n 2.34.0 is
 the workflow tool-name floor, not a verified public-OAuth minimum.
 
@@ -18,7 +18,8 @@ the workflow tool-name floor, not a verified public-OAuth minimum.
 | MCP GA status | The [n8n 2.31 release notes](https://docs.n8n.io/changelog/release-notes/#n8n231), released 2026-07-14, explicitly identify instance-level MCP as generally available; [PR #34084](https://github.com/n8n-io/n8n/pull/34084), merged 2026-07-13, removed its Preview label for that reason. The current [tool reference](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference/) documents workflow management and builder tools separately from standalone agent management, which remains Preview and is outside this power's scope. GA status is separate from the power's version compatibility and acceptance checks. |
 | Public repository import | On 2026-10-16, stable Kiro 1.2.37 on macOS 27.0.1 imported `https://github.com/n8n-io/n8n-kiro-power` directly through **Import power from GitHub**, without a checkout or branch override. It exposed exactly three entry skills, and all 71 installed skill/helper/reference files matched `main` at `65bff7a`. Activation loaded the connection skill. This tested the existing `n8n` metadata; the renamed release still needs a post-merge import and connection check. |
 | Candidate metadata | On 2026-10-16, a separate folder import displayed `n8n-workflow-dev`, the 74-character benefit-first description, and exactly three entry skills in Kiro 1.2.37. Subsequent GUI updates installed the revised candidate; all three installed entry files matched the working tree before the final context-recovery test. |
-| Automated checks | On 2026-10-16, all 66 tests, bundle reproducibility and package checks passed on macOS / Node 24.19.0, including detected Kiro 1.2.37 and upgrade/reuse coverage. All [eight validation jobs](https://github.com/n8n-io/n8n-kiro-power/actions/runs/37848562847) passed on merged commit `65bff7a`: Node 22/24 on macOS, Linux and Windows, plus manifest and shared-snapshot checks. Helper CI does not establish IDE support on every OS. |
+| Merged release package | On 2026-10-19, the public archive of `f807c6f` was downloaded without GitHub authentication and checked in a clean directory. Its repository tree exactly matches reviewed candidate `b86b94e`. `npm ci --ignore-scripts` and `npm run check` passed: all 66 tests, bundle reproducibility, manifest, bundled references, Markdown links and documented commands. This verifies the public package; it does not replace the final native import/read check. |
+| Automated checks | All [eight validation jobs](https://github.com/n8n-io/n8n-kiro-power/actions/runs/39245374146) passed on merged release `f807c6f`: Node 22/24 on macOS, Linux and Windows, plus manifest and shared-snapshot checks. The clean-archive check also passed on macOS / Node 24.19.0. Helper CI does not establish IDE support on every OS. |
 | Validator runtime | Both bundled validators and their full error-response expressions passed checks with the local n8n 2.43.0 expression runtime, including scalar bodies, invalid tags, unknown fields and a `__proto__` key. This was a separate expression-runtime check, not a live workflow test. |
 | Local public OAuth | On 2026-09-28, Kiro 1.1.70 completed S256 PKCE consent with a helper-created public client and called `search_workflows` on local n8n 2.41.0 development without the Basic-authentication patch. The 2026-10-08 installed-power test completed OAuth and a native read on Kiro 1.2.37 / local n8n 2.42.0 development. |
 | Released self-hosted server | On 2026-10-16, Kiro 1.2.37 completed public OAuth against the unmodified official n8n 2.43.7 image on loopback port 5691. The installed candidate created unpublished workflow `nrORVkMVRyddiPbB` with only a Manual Trigger and a pure arithmetic Code node. Native execution 1 returned A=45/B=27; deliberate wrong-output execution 2 returned 50/30; repair execution 3 returned 45/27; execution 4 failed with `KIRO_STABLE_ACCEPTANCE_FAILURE`; repair execution 5 returned 45/27. Native execution reads confirmed each result. No external integrations or credentials were used. This is the oldest released self-hosted version verified by this acceptance run. |
@@ -108,9 +109,12 @@ passwords, and private payloads out of evidence.
       from the GitHub URL on stable Kiro and verify its installed contents and
       three entry skills, then run setup and an authenticated native read.
       The October 16 test reused an existing grant; no PR checkout was needed.
-- [ ] **Final release import and connection:** repeat the GitHub URL import after
-      the metadata changes land on `main`, followed by connection setup and a
-      native read against that release commit.
+- [x] **Merged repository package:** verify the public release archive and CI
+      against `f807c6f`, including the final metadata and shared-guide fixes.
+- [ ] **Final release import and connection:** repeat the GitHub URL import of
+      merged release `f807c6f` on a supported Kiro version, followed by connection
+      setup and a native read. This was not completed in the October 19
+      repository-only preparation; earlier candidate acceptance remains recorded above.
 - [x] **Agent-terminal setup:** invoke the installed helper successfully
       from Kiro's agent terminal with Node available in its environment.
 - [x] **Supported servers:** complete public OAuth and workflow operations on
@@ -143,17 +147,17 @@ passwords, and private payloads out of evidence.
       preserving separately managed OAuth and token configuration. Native OAuth
       access and exact configuration preservation passed as recorded above.
 
-## Release order
+## Publication
 
-1. Complete the remaining acceptance checks above against the release commit on
-   `main`, including a clean import of the public repository URL after merging
-   the `n8n-workflow-dev` rename and shortened description. PR #2 is already
-   merged. There is no npm publication or hosted service deployment.
-2. Confirm the maintainer, durable monitored email, and authorized submitter.
-   Have that representative review and accept the publisher terms.
-3. Check the [current submission requirements](https://kiro.dev/powers/submit/)
-   and submit the public repository URL. Record the submission date and outcome;
-   submission or listing approval is not yet recorded in this checklist.
+The release package is available from the public repository's default branch.
+There is no npm publication or hosted service deployment. The remaining native
+smoke test is recorded above; newer Kiro compatibility is outside this release.
+
+The maintainer confirmed on 2026-10-19 that submission is handled separately.
+Submission details, publisher terms and registry approval are owned by that
+process; this repository does not claim a listing approval or require a second
+submission. The [submission requirements](https://kiro.dev/powers/submit/) were
+checked against the manifest, privacy/support links and MCP GA evidence.
 
 [n8n PR #39637](https://github.com/n8n-io/n8n/pull/39637) separately fixes HTTP
 Basic client authentication. Public-client OAuth does not require that PR or a
@@ -166,7 +170,7 @@ new n8n OAuth release.
 - **Organization:** n8n
 - **Use case:** Build automation workflows
 - **Repository:** https://github.com/n8n-io/n8n-kiro-power
-- **Submitter name and durable contact email:** to be supplied by the publisher
+- **Submitter and contact details:** managed through the separate submission process
 
 Suggested domain description:
 
