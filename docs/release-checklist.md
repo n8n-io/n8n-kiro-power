@@ -152,9 +152,10 @@ passwords, and private payloads out of evidence.
 ## Publication
 
 The release package is available from the public repository's default branch.
-There is no npm publication or hosted service deployment. All repository
-acceptance gates are complete for the supported release; no implementation or
-verification work remains. Newer Kiro compatibility is outside this release.
+There is no npm publication or hosted service deployment. All acceptance gates
+are complete for the supported release. The pinned-testing argument failures,
+their unknown cause and the verified manual-execution fallback remain documented
+above as known limitations. Newer Kiro compatibility is outside this release.
 
 The maintainer confirmed on 2026-10-19 that submission is handled separately.
 Submission details, publisher terms and registry approval are owned by that
