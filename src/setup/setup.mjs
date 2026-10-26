@@ -92,7 +92,8 @@ export async function runSetup(options, dependencies = {}) {
         next: 'A listening port may belong to Kiro. Only a successful read through Kiro proves authorization and connection.', warnings: [consentNote] };
     }
 
-    const version = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
+    const detectedVersion = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
+    const version = typeof detectedVersion === 'string' ? detectedVersion : undefined;
     const warnings = [...kiroVersionWarnings(version), consentNote];
     if (record && record.status !== 'ready' && !options.newRegistration) fail('REGISTRATION_UNCERTAIN', 'A previous registration did not finish. Consult the instance administrator, then explicitly retry with repair --new-registration if needed.');
     if (record && options.callbackPort !== undefined && options.callbackPort !== record.callbackPort && command !== 'repair') fail('CALLBACK_CHANGE', 'Changing an existing callback requires repair --callback-port and fresh authorization.');

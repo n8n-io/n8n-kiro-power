@@ -41,14 +41,17 @@ not claim older releases are incompatible. The per-client connect screen in
 - [x] Strip terminal escape sequences and remaining control characters from
       displayed Kiro versions. Regression coverage includes ANSI formatting,
       OSC controls, line breaks and control-only input; setup still continues.
+- [x] Treat non-string detected versions as unknown in warnings and saved state.
+      Cover numbers, booleans, objects, arrays and missing values through dry-run,
+      configure, reuse, repair and doctor against the mock server.
 - [x] State the debug skill's workflow builder and read/write/execute access
       requirements for repair/testing. Keep permitted read-only diagnosis
       available when repair permissions are missing, without bypassing grants.
-- [x] Run `npm run build` and `npm run check`: **92/92 tests passed** on
+- [x] Run `npm run build` and `npm run check`: **93/93 tests passed** on
       macOS / Node 24.19.0, including mock-server setup across older, current,
       future, prerelease and undetected Kiro versions. The check also verifies
       bundle reproducibility, packaging and documented commands. Repeated after
-      the final guidance corrections and terminal-control coverage: all 92 tests
+      the final guidance corrections and malformed-version coverage: all 93 tests
       passed for the 1.0.2 package.
       `npm run skills:check` also passed against the pinned upstream commit plus
       local corrections.

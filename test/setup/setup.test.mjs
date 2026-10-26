@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, readdir, stat, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { runSetup } from '../../src/setup/setup.mjs';
+import { kiroVersionWarnings } from '../../src/setup/kiro.mjs';
 import { atomicWrite, parseConfig, readSnapshot, withLock } from '../../src/setup/storage.mjs';
 import { fixture } from './helpers.mjs';
 import { createServer } from 'node:net';
@@ -232,6 +233,31 @@ for (const kiroVersion of ['1.0.411', '1.1.69', '1.2.5', '1.2.38', '1.3.11', '1.
     assert.equal(parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'].oauth.clientId, 'test-client-2');
   });
 }
+
+test('non-string detected versions warn and persist as unknown through setup and repair', async t => {
+  for (const detectedVersion of [123, 0, true, false, {}, ['1.4.26'], null, undefined]) {
+    const f = await fixture(t);
+    const options = { ...f.options, kiroVersion: undefined };
+    const deps = { ...f.deps, detectKiroVersion: async () => detectedVersion };
+    const checkWarnings = warnings => assert.ok(warnings.some(message =>
+      message.includes('version could not be detected') && message.includes('Setup will continue')));
+    checkWarnings(kiroVersionWarnings(detectedVersion));
+    const dryRun = await runSetup({ ...options, dryRun: true }, deps);
+    assert.equal(dryRun.status, 'dry_run');
+    checkWarnings(dryRun.warnings);
+    assert.equal(f.count(), 0);
+    for (const operation of [options, options, { ...options, command: 'repair', newRegistration: true }]) {
+      const result = await runSetup(operation, deps);
+      assert.equal(result.status, 'configured_awaiting_authorization');
+      checkWarnings(result.warnings);
+      const records = Object.values(JSON.parse(await readFile(f.statePath, 'utf8')).connections);
+      assert.equal(records.length, 1);
+      assert.equal(records[0].kiroVersion, 'unknown');
+    }
+    assert.equal(f.count(), 2);
+    assert.equal((await runSetup({ ...options, command: 'doctor' }, deps)).status, 'configured_unverified');
+  }
+});
 
 test('version warnings strip terminal escapes and controls without blocking setup', async t => {
   const f = await fixture(t);

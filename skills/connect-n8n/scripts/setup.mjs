@@ -191,7 +191,7 @@ async function detectKiroVersion() {
 }
 function kiroVersionWarnings(version) {
   if (TESTED_KIRO_VERSIONS.includes(version)) return [];
-  const displayVersion = version ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, "") : "";
+  const displayVersion = typeof version === "string" ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, "") : "";
   const detected = displayVersion ? `Kiro IDE ${displayVersion} has not been tested with this helper.` : "The Kiro IDE version could not be detected.";
   return [`Warning: ${detected} Tested versions: ${TESTED_KIRO_VERSIONS.join(", ")}. Setup will continue. Authenticate in Kiro and verify a read-only workflow search.`];
 }
@@ -1812,7 +1812,8 @@ async function runSetup(options, dependencies = {}) {
         warnings: [consentNote]
       };
     }
-    const version = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
+    const detectedVersion = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
+    const version = typeof detectedVersion === "string" ? detectedVersion : void 0;
     const warnings = [...kiroVersionWarnings(version), consentNote];
     if (record && record.status !== "ready" && !options.newRegistration) fail("REGISTRATION_UNCERTAIN", "A previous registration did not finish. Consult the instance administrator, then explicitly retry with repair --new-registration if needed.");
     if (record && options.callbackPort !== void 0 && options.callbackPort !== record.callbackPort && command !== "repair") fail("CALLBACK_CHANGE", "Changing an existing callback requires repair --callback-port and fresh authorization.");

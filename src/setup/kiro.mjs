@@ -24,7 +24,7 @@ export async function detectKiroVersion() {
 export function kiroVersionWarnings(version) {
   if (TESTED_KIRO_VERSIONS.includes(version)) return [];
   // Strip escape sequences and remaining controls before displaying CLI-supplied text.
-  const displayVersion = version ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, '') : '';
+  const displayVersion = typeof version === 'string' ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, '') : '';
   const detected = displayVersion ? `Kiro IDE ${displayVersion} has not been tested with this helper.` : 'The Kiro IDE version could not be detected.';
   return [`Warning: ${detected} Tested versions: ${TESTED_KIRO_VERSIONS.join(', ')}. Setup will continue. Authenticate in Kiro and verify a read-only workflow search.`];
 }
