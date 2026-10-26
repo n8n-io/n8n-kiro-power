@@ -26,34 +26,44 @@ test('CLI errors are structured, nonzero and do not echo secret arguments', asyn
   });
 });
 
-test('CLI runs through a symlinked directory and reports errors instead of silently succeeding', async t => {
-  const f = await fixture(t);
-  const directory = path.join(f.root, 'real directory');
-  const alias = path.join(f.root, 'linked directory');
-  await mkdir(directory);
-  await copyFile('skills/connect-n8n/scripts/setup.mjs', path.join(directory, 'setup.mjs'));
-  await symlink(directory, alias, process.platform === 'win32' ? 'junction' : 'dir');
-  const target = path.join(alias, 'setup.mjs');
-  const { stdout } = await promisify(execFile)(process.execPath, [target, '--help']);
-  assert.match(stdout, /configure\|doctor\|repair\|remove/);
-  await assert.rejects(promisify(execFile)(process.execPath, [target, 'configure', '--json']), error => {
-    return error.code === 1 && JSON.parse(error.stdout).code === 'ARGUMENT';
+const launchModes = [
+  { name: 'default resolution', args: [], options: {} },
+  { name: 'preserve-symlinks-main flag', args: ['--preserve-symlinks-main'], options: {} },
+  { name: 'preserve-symlinks-main in NODE_OPTIONS', args: [], options: {
+    env: { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --preserve-symlinks-main`.trim() },
+  } },
+];
+
+for (const mode of launchModes) {
+  test(`CLI runs through a symlinked directory with ${mode.name} and reports errors`, async t => {
+    const f = await fixture(t);
+    const directory = path.join(f.root, 'real directory');
+    const alias = path.join(f.root, 'linked directory');
+    await mkdir(directory);
+    await copyFile('skills/connect-n8n/scripts/setup.mjs', path.join(directory, 'setup.mjs'));
+    await symlink(directory, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    const target = path.join(alias, 'setup.mjs');
+    const { stdout } = await promisify(execFile)(process.execPath, [...mode.args, target, '--help'], mode.options);
+    assert.match(stdout, /configure\|doctor\|repair\|remove/);
+    await assert.rejects(promisify(execFile)(process.execPath, [...mode.args, target, 'configure', '--json'], mode.options), error => {
+      return error.code === 1 && JSON.parse(error.stdout).code === 'ARGUMENT';
+    });
   });
-});
 
-test('CLI runs through a symlinked file', { skip: process.platform === 'win32' }, async t => {
-  const f = await fixture(t);
-  const target = path.join(f.root, 'setup.mjs');
-  const alias = path.join(f.root, 'linked helper.mjs');
-  await copyFile('skills/connect-n8n/scripts/setup.mjs', target);
-  await symlink(target, alias);
-  const { stdout } = await promisify(execFile)(process.execPath, [alias, '--help']);
-  assert.match(stdout, /configure\|doctor\|repair\|remove/);
-});
+  test(`CLI runs through a symlinked file with ${mode.name}`, { skip: process.platform === 'win32' }, async t => {
+    const f = await fixture(t);
+    const target = path.join(f.root, 'setup.mjs');
+    const alias = path.join(f.root, 'linked helper.mjs');
+    await copyFile('skills/connect-n8n/scripts/setup.mjs', target);
+    await symlink(target, alias);
+    const { stdout } = await promisify(execFile)(process.execPath, [...mode.args, alias, '--help'], mode.options);
+    assert.match(stdout, /configure\|doctor\|repair\|remove/);
+  });
 
-test('importing the bundle does not run the CLI', async () => {
-  const target = pathToFileURL(path.resolve('skills/connect-n8n/scripts/setup.mjs')).href;
-  const { stdout, stderr } = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(target)})`]);
-  assert.equal(stdout, '');
-  assert.equal(stderr, '');
-});
+  test(`importing the bundle with ${mode.name} does not run the CLI`, async () => {
+    const target = pathToFileURL(path.resolve('skills/connect-n8n/scripts/setup.mjs')).href;
+    const { stdout, stderr } = await promisify(execFile)(process.execPath, [...mode.args, '--input-type=module', '-e', `await import(${JSON.stringify(target)})`], mode.options);
+    assert.equal(stdout, '');
+    assert.equal(stderr, '');
+  });
+}

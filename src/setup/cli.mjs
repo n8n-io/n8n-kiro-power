@@ -44,6 +44,7 @@ export async function main(args = process.argv.slice(2)) {
   }
 }
 
-// Node resolves symlinks when loading the entry module, but argv keeps the launch path.
+// Node normally resolves the main module's symlinks; --preserve-symlinks-main keeps them.
+const launchUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : undefined;
 const entryPath = process.argv[1] ? await realpath(process.argv[1]).catch(() => undefined) : undefined;
-if (entryPath && import.meta.url === pathToFileURL(entryPath).href) await main();
+if (import.meta.url === launchUrl || (entryPath && import.meta.url === pathToFileURL(entryPath).href)) await main();

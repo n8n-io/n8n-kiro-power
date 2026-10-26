@@ -6,12 +6,12 @@ description: 'Use when you want to expose an n8n workflow as a tool the coding a
 <!-- TEMPORARY: update whenever n8n mcp capacities are added. a lot of listed functionalities missing are coming soon -->
 # n8n Extending MCP
 
-Any n8n workflow with MCP access enabled becomes a tool the coding agent can call by name. Two common cases:
+A workflow with MCP access enabled and a supported trigger can be discovered and executed through the instance-level MCP tools. Two common cases:
 
 1. **Wrap n8n capabilities the MCP doesn't expose.** The MCP covers workflow CRUD, validation, execution, data tables, credential listing, execution search, folder create/rename/move and folder/project listing, tag listing and attach/detach. Still missing: folder deletion, project create/rename, tag rename/delete, instance metadata, credential creation. Build a workflow that hits the n8n API and exposes the result as an agent tool.
 2. **Expose a general-purpose workflow as a tool.** A workflow that has nothing to do with n8n itself (calls a third-party API, runs internal business logic, looks something up in a private system) can be MCP-callable. Lets the agent invoke real operations during a coding session.
 
-The MCP calls your workflow as if it were a native tool: input from the `Execute Workflow Trigger`, output from the workflow's last node.
+The agent calls `execute_workflow` with a supported trigger and retrieves the result with `get_workflow_execution`. An `Execute Workflow Trigger` is for sub-workflow calls and is not supported by this MCP execution path. Read the live tool schema and the workflow's `triggerInfo` before choosing a trigger.
 
 ## When to reach for this
 
@@ -42,7 +42,7 @@ Don't reach for this for:
 ## Protocol
 
 - **Search for existing wrappers first.** `search_workflows({ tags: ['tool'] })` and a capability keyword search. If something matches, use it instead of duplicating.
-- **For case 1, build as a stateless, queryable utility.** Takes input, calls n8n's API, returns the result. No side effects. Case 2 may legitimately have side effects (sending, writing); name them in the tool description.
+- **Prefer read-only utilities.** A wrapper for deletion, creation, or other writes has real effects even in case 1. Name those effects in the workflow description and obtain authorization before executing them.
 - **Offer to edit the agent's context file yourself** (CLAUDE.md, AGENTS.md, GEMINI.md, whatever the user's agent reads on session start) to add an entry for the new tool. You have Edit/Write tools, so there's no reason to make the user paste a snippet manually. Ask first since it's their config file, then edit it directly when they say yes.
 
 ## The pattern, end to end
@@ -54,15 +54,23 @@ Don't reach for this for:
    Want me to create it?"
 3. User: yes.
 4. You build the workflow:
-   - Trigger: Execute Workflow Trigger with declared inputs.
+   - Trigger: a supported Webhook, Chat, Form, or Schedule Trigger. For a
+     utility that accepts structured input, a Webhook Trigger is one option;
+     choose its method, request contract and authentication deliberately.
+     Adding a webhook also exposes an HTTP route when published; protect it
+     for the intended callers. Manual Trigger is available in manual mode.
    - Body: whatever logic the tool needs (HTTP Request to n8n's API, a
      third-party call, internal computation).
    - Output: structured response.
-5. Validate, test, publish.
+5. Validate and test with generated pin data. Verify real effects and
+   credentials before an authorized live run. Publish only when authorized
+   and needed for production execution; manual execution can run the draft.
 6. Ask the user if you can add an entry for this tool to their agent context
    file (CLAUDE.md / AGENTS.md / etc.) so future sessions know to search for
    it by name. Edit the file directly when they say yes.
-7. The workflow is immediately callable: agent-created workflows have `availableInMCP: true` set by default.
+7. Verify MCP availability, access and the supported trigger. Production
+   execution requires a published version. Agent-created workflows normally
+   have `availableInMCP: true`, but that alone does not prove executability.
 ```
 
 ## Common case-1 wrappers (missing MCP capabilities)
@@ -94,12 +102,12 @@ Output: { version, edition, integrations: [...], limits: {...} }
 
 ## How the agent invokes a tool workflow
 
-The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Discovery and invocation are two steps:
+The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Use the native tools in this order:
 
-1. **Discover** via `search_workflows({ query: '<keyword>' })`. Workflows with MCP access on return `availableInMCP: true`. Filter for that.
-2. **Invoke** via `execute_workflow({ workflowId, inputs, executionMode })`. Read the live tool schema and the workflow's input schema from `get_workflow_details` first; the `Execute Workflow Trigger` defines typed fields. Set `executionMode` to `"manual"` when testing or validating the current workflow, or `"production"` only when intentionally running the published workflow. Both modes can cause real effects: apply the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md) and obtain authorization for those effects before execution.
-
-Output is whatever the workflow's last node returns.
+1. **Discover** via `search_workflows({ query: '<keyword>' })`. Confirm `availableInMCP` and access with `get_workflow_details`; search can return previews of workflows that are not exposed.
+2. **Inspect** the live `execute_workflow` schema and the workflow's returned `triggerInfo`. Production mode supports Webhook, Chat, Form and Schedule triggers; manual mode additionally supports Manual Trigger. Do not use an Execute Workflow Trigger for this path. Select a supported trigger by its exact node name.
+3. **Invoke** via `execute_workflow({ workflowId, executionMode, triggerNodeName, inputs })`. `triggerNodeName` is required when passing `inputs`; input variants are `webhook`, `chat` or `form`, with the fields advertised by the live schema. Omit `inputs` for a trigger that takes none. Set `executionMode` to `"manual"` when testing or validating the current workflow, or `"production"` only when intentionally running the published workflow. Both modes can cause real effects: apply the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md) and obtain authorization for those effects before execution.
+4. **Read the result.** Execution returns a start status and `executionId`, not the workflow's final output. If it started, use `get_workflow_execution({ workflowId, executionId, includeData: true })` until a terminal result is available. Inspect errors and the relevant node outputs before reporting success. A timeout or a still-running execution remains unverified; do not start another execution merely because the result is pending.
 
 **MCP access defaults:** Agent-created workflows default to `availableInMCP: true`. UI-created workflows may default off, in which case the user has to toggle MCP access on in the workflow's settings before it appears in search results. Either way, the user can flip it off later to restrict access.
 

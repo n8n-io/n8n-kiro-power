@@ -1926,8 +1926,9 @@ The helper configures a public client; sign in and approve access in Kiro.`);
     process.exitCode = 1;
   }
 }
+var launchUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : void 0;
 var entryPath = process.argv[1] ? await realpath2(process.argv[1]).catch(() => void 0) : void 0;
-if (entryPath && import.meta.url === pathToFileURL(entryPath).href) await main();
+if (import.meta.url === launchUrl || entryPath && import.meta.url === pathToFileURL(entryPath).href) await main();
 export {
   OPTIONS,
   main,

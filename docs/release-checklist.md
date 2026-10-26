@@ -39,15 +39,25 @@ not claim older releases are incompatible. The per-client connect screen in
 - [x] Replace the exact version gate with a warning for untested or undetected
       versions, including configure, repair and dry-run. Doctor and remove do
       not require version detection.
-- [x] Run `npm run build` and `npm run check`: **85/85 tests passed** on
+- [x] Run `npm run build` and `npm run check`: **91/91 tests passed** on
       macOS / Node 24.19.0, including mock-server setup across older, current,
       future, prerelease and undetected Kiro versions. The check also verifies
       bundle reproducibility, packaging and documented commands. Repeated after
-      the guidance corrections and 1.0.2 version bump with the same passing result.
+      the final guidance corrections and symlink-mode coverage: all 91 tests
+      passed for the 1.0.2 package.
       `npm run skills:check` also passed against the pinned upstream commit plus
       local corrections.
-- [x] Resolve the helper launch path before the entry-point comparison. Cover
-      symlinked directories, symlinked files and import without CLI execution.
+- [x] Accept the original and resolved helper launch paths in the entry-point
+      comparison. Cover symlinked directories, symlinked files and import without
+      CLI execution under default Node resolution, `--preserve-symlinks-main`,
+      and the equivalent `NODE_OPTIONS` setting.
+- [x] Align the MCP-extension recipe with supported triggers, explicit trigger
+      selection when supplying inputs, and execution-result retrieval. A returned
+      execution ID is not a completed workflow result.
+- [x] Require authorization before stopping, unpublishing or changing a workflow
+      during review. Align testing summaries with supplied pin data: pinned
+      integrations can be simulated before credential setup, while prerequisites
+      and authorization are required for nodes that run for real.
 - [x] Keep the final Power name **`n8n-workflow-dev`**, confirmed by the maintainer
       on 2026-10-26. The manifest, README and connection skill use this name.
 - [x] Point support to the [n8n community](https://community.n8n.io). GitHub's
@@ -225,9 +235,8 @@ with registry identifier `n8n` and an n8n icon. The package identifier remains
 
 The compatibility helper passed the Kiro 1.4.26 OAuth/native-read acceptance
 recorded above. The final 1.0.2 package passed local checks. The later guidance
-corrections were checked as
-package changes; they have not had a separate live workflow run. Historical
-pinned-testing argument failures, their unknown cause and the verified
+corrections were checked as package changes; they have not had a separate live
+workflow run. Historical pinned-testing argument failures, their unknown cause and the verified
 manual-execution fallback remain documented as known limitations.
 
 The following delivery checks remain open until the release PR records their
@@ -241,6 +250,11 @@ observations there; no documentation-only follow-up PR is required to close them
       skills, and the expected n8n logo. Confirm an existing saved connection is
       preserved and one native workflow read succeeds. The October 26 folder
       import does not satisfy this final distribution check.
+
+The separate [shared-skills update PR #4](https://github.com/n8n-io/n8n-kiro-power/pull/4)
+is not required for this release. Regenerate it from merged `main` before review
+so it retains these corrections and receives a new version. Its standalone-Agent
+routing changes require a separate scope and compatibility review.
 
 The maintainer confirmed on 2026-10-19 that publisher communication is handled
 separately. Submission details and publisher terms remain owned by that process;

@@ -10,7 +10,7 @@ Walk the list top to bottom. For each item, inspect the workflow (`get_workflow_
 
 | Severity | Meaning | Action |
 |---|---|---|
-| **MUST FIX** | Ship-blocker. Security hole, broken connection, or production-breaking bug. | Stop the workflow if active, fix before re-enabling. |
+| **MUST FIX** | Ship-blocker. Security hole, broken connection, or production-breaking bug. | Report the risk and recommend stopping the active workflow. Stop, unpublish, edit or re-enable only with authorization for that action; a review request alone does not authorize changes. |
 | **SHOULD FIX** | Real issue. Antipattern, missing error handling on production paths, broken contracts. | Plan a follow-up, fix in the next change. |
 | **NICE TO HAVE** | Polish. Naming, descriptions, conventions. | Clean up opportunistically. |
 
