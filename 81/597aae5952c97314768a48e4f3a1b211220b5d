@@ -1,0 +1,27 @@
+patches/shared-skills.patch
+  s_d1a51db6638b19::t_716b07c86a911f 283,292-306,406,413,420-421,423,432,445-447,451-458
+skills/connect-n8n/references/n8n-skills/skills/using-n8n-skills-official/SKILL.md
+  ai_agent 54
+skills/connect-n8n/references/n8n-skills/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
+  ai_agent 66,72
+docs/release-checklist.md
+  s_d1a51db6638b19::t_716b07c86a911f 60-64
+skills/connect-n8n/references/n8n-skills/skills/n8n-workflow-lifecycle-official/SKILL.md
+  ai_agent 14,124-126,139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "81597aae5952c97314768a48e4f3a1b211220b5d",
+  "prompts": {},
+  "sessions": {
+    "s_d1a51db6638b19": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17856-2ba1-7913-bf34-2d8bf6818dcf",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
