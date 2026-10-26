@@ -1,11 +1,10 @@
 # Release checklist
 
-**Status: compatibility update passed local validation and Kiro 1.4.26 live acceptance.**
-The 1.0.2 candidate still needs to be merged and verified through the public
-installation/update path. Record that post-merge result in the release PR;
-this checklist does not claim it has passed. Earlier
-release import/setup/native-read verification completed 2026-10-19; the full
-workflow acceptance run completed 2026-10-16.
+**Status: documented pre-submission checks complete.**
+The 1.0.2 compatibility update passed local validation, the cross-platform CI
+matrix, and the Kiro 1.4.26 live acceptance described below. Publication follows
+merging the release PR. Earlier release import/setup/native-read verification
+completed 2026-10-19; the full workflow acceptance run completed 2026-10-16.
 [PR #3](https://github.com/n8n-io/n8n-kiro-power/pull/3) merged on 2026-10-19
 as `f807c6f`, including the final name, description and guidance fixes.
 The [setup guide](setup-helper.md) describes the implemented commands.
@@ -239,17 +238,13 @@ corrections were checked as package changes; they have not had a separate live
 workflow run. Historical pinned-testing argument failures, their unknown cause and the verified
 manual-execution fallback remain documented as known limitations.
 
-The following delivery checks remain open until the release PR records their
-results. Record the merge commit, Kiro version, installed package version and
-observations there; no documentation-only follow-up PR is required to close them.
+- [x] **Release validation:** all eight [validation jobs](https://github.com/n8n-io/n8n-kiro-power/actions/runs/40335993987)
+      passed for implementation commit `1e89774`, including manifest and shared
+      snapshot checks plus Node 22/24 on macOS, Linux and Windows.
 
-- [ ] **Merged candidate:** pass the release PR's CI and merge version 1.0.2.
-- [ ] **Public installation/update:** on Kiro 1.4.26, install the catalogue entry
-      or use **Check for updates → Install updates** on an existing installation.
-      Verify version 1.0.2, the corrected helper and guidance, exactly three entry
-      skills, and the expected n8n logo. Confirm an existing saved connection is
-      preserved and one native workflow read succeeds. The October 26 folder
-      import does not satisfy this final distribution check.
+The compatibility update is delivered by merging [PR #6](https://github.com/n8n-io/n8n-kiro-power/pull/6).
+Publisher acceptance and catalogue rollout are handled separately from these
+completed pre-submission checks.
 
 The separate [shared-skills update PR #4](https://github.com/n8n-io/n8n-kiro-power/pull/4)
 is not required for this release. Regenerate it from merged `main` before review
