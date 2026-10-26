@@ -38,11 +38,17 @@ not claim older releases are incompatible. The per-client connect screen in
 - [x] Replace the exact version gate with a warning for untested or undetected
       versions, including configure, repair and dry-run. Doctor and remove do
       not require version detection.
-- [x] Run `npm run build` and `npm run check`: **91/91 tests passed** on
+- [x] Strip terminal escape sequences and remaining control characters from
+      displayed Kiro versions. Regression coverage includes ANSI formatting,
+      OSC controls, line breaks and control-only input; setup still continues.
+- [x] State the debug skill's workflow builder and read/write/execute access
+      requirements for repair/testing. Keep permitted read-only diagnosis
+      available when repair permissions are missing, without bypassing grants.
+- [x] Run `npm run build` and `npm run check`: **92/92 tests passed** on
       macOS / Node 24.19.0, including mock-server setup across older, current,
       future, prerelease and undetected Kiro versions. The check also verifies
       bundle reproducibility, packaging and documented commands. Repeated after
-      the final guidance corrections and symlink-mode coverage: all 91 tests
+      the final guidance corrections and terminal-control coverage: all 92 tests
       passed for the 1.0.2 package.
       `npm run skills:check` also passed against the pinned upstream commit plus
       local corrections.

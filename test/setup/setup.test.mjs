@@ -233,6 +233,30 @@ for (const kiroVersion of ['1.0.411', '1.1.69', '1.2.5', '1.2.38', '1.3.11', '1.
   });
 }
 
+test('version warnings strip terminal escapes and controls without blocking setup', async t => {
+  const f = await fixture(t);
+  const cases = [
+    ['\u001b[31m9.0.0\u001b[0m', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b]0;fake title\u00079.0.0', '9.0.0 has not been tested'],
+    ['\u001b]8;;https://example.com\u001b\\9.0.0\u001b]8;;\u001b\\', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b]8;;https://example.com/(foo)\u00079.0.0\u001b]8;;\u0007', '9.0.0 has not been tested'],
+    ['\u001b]52;c;Y2xpcGJvYXJk\u00079.0.0', 'Kiro IDE 9.0.0 has not been tested'],
+    ['9.0.0\r\n\t\b\u0007\u007f\u0085', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b[31m1.4.26\u001b[0m', 'Kiro IDE 1.4.26 has not been tested'],
+    ['\u001b[31m\r\n\u0007', 'version could not be detected'],
+  ];
+  for (const [kiroVersion, expected] of cases) {
+    const options = { ...f.options, kiroVersion };
+    for (const dryRun of [true, false]) {
+      const result = await runSetup({ ...options, dryRun }, f.deps);
+      assert.equal(result.status, dryRun ? 'dry_run' : 'configured_awaiting_authorization');
+      assert.ok(result.warnings.some(message => message.includes(expected) && message.includes('Setup will continue')), JSON.stringify(kiroVersion));
+      for (const message of result.warnings) assert.doesNotMatch(message, /[\u0000-\u001f\u007f-\u009f]/);
+    }
+  }
+  assert.equal(f.count(), 1);
+});
+
 test('doctor and remove never require version detection', async t => {
   const f = await fixture(t);
   await runSetup(f.options, f.deps);

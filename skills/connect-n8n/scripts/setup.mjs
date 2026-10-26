@@ -16,7 +16,7 @@ import { execFile } from "node:child_process";
 import { createHash as createHash2 } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:net";
-import { promisify } from "node:util";
+import { promisify, stripVTControlCharacters } from "node:util";
 
 // src/setup/errors.mjs
 var SetupError = class extends Error {
@@ -191,7 +191,8 @@ async function detectKiroVersion() {
 }
 function kiroVersionWarnings(version) {
   if (TESTED_KIRO_VERSIONS.includes(version)) return [];
-  const detected = version ? `Kiro IDE ${version} has not been tested with this helper.` : "The Kiro IDE version could not be detected.";
+  const displayVersion = version ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, "") : "";
+  const detected = displayVersion ? `Kiro IDE ${displayVersion} has not been tested with this helper.` : "The Kiro IDE version could not be detected.";
   return [`Warning: ${detected} Tested versions: ${TESTED_KIRO_VERSIONS.join(", ")}. Setup will continue. Authenticate in Kiro and verify a read-only workflow search.`];
 }
 async function availablePort(port = 0) {
