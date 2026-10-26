@@ -278,10 +278,9 @@ index c3dc77e..7e0aa67 100644
  ### Rate limits
  
 diff --git a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
-index f153b0c..d2bce8c 100644
 --- a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
 +++ b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
-@@ -16,7 +16,7 @@ Walk the workflow with these questions in mind. These are patterns that recur ac
+@@ -16,7 +16,7 @@
  
  **Set nodes:**
  - For each Set node, count how many downstream nodes reference its output fields.
@@ -289,6 +288,21 @@ index f153b0c..d2bce8c 100644
 +- If a Set node only prepares expressions for 0 or 1 downstream consumer, inline them where used when this preserves behavior. **Keep Set nodes that whitelist fields (Keep Only Set), shape a sub-workflow return contract, or perform a required transformation.** See [n8n-expressions-official, Strong defaults / The Set-node antipattern](../../n8n-expressions-official/SKILL.md#strong-defaults).
  - Common offender: a Set node right before a Data Table Insert / Update node, mapping fields to match schema. Map directly in the Insert/Update node's expression slots.
  - Common offender: a Set node building a body before an Email/Slack node. Build the body in the body field with an expression.
+ 
+@@ -63,11 +63,13 @@
+ 
+ For internal one-off scripts (manual trigger), error handling can be looser.
+ 
+-### 4. Credentials, not tokens in text fields
++### 4. Credentials and production prerequisites
+ 
+ Walk every node config for tokens, API keys, or auth values pasted into text parameters. They should be referenced via the credential system.
+ 
+ If you find any, invoke `n8n-credentials-and-security-official` and migrate before publishing.
++
++Confirm that every integration that will run when published has its required credentials selected and verified, and its required resources and wiring in place. Pinned tests may run before this setup, but their simulated output does not satisfy this publication gate. If a prerequisite is missing or unverified, keep the workflow unpublished and report the blocker. Do not run side-effecting integrations merely to prove readiness without authorization for those effects.
+ 
+ ### 5. `test_workflow` produced expected output
  
 diff --git a/skills/n8n-debugging-official/SKILL.md b/skills/n8n-debugging-official/SKILL.md
 --- a/skills/n8n-debugging-official/SKILL.md
@@ -389,23 +403,24 @@ diff --git a/skills/using-n8n-skills-official/SKILL.md b/skills/using-n8n-skills
  | "I'll fan out these three slow steps to run in parallel" | Invoke `n8n-workflow-lifecycle-official` and read the Execution model section. n8n executes fan-out branches sequentially (top-to-bottom by Y-position), not concurrently. For real concurrency, see `n8n-loops-official` and `n8n-subworkflows-official` (`mode: 'each'` + `waitForSubWorkflow: false`). |
  | "User said which project, I'll just build it" | Invoke `n8n-workflow-lifecycle-official`. Project is not folder. Ask about folder placement BEFORE building. `create_folder` works on a registered instance. If the folder tools are absent, the instance isn't registered, and folders are blocked in the UI too, so the user must register it first (free Community-edition registration in Settings), not create the folder by hand. |
 -| "I'll just run `test_workflow` to see what happens" | Invoke `n8n-workflow-lifecycle-official` `references/TESTING.md`. `test_workflow` mocks the trigger only. Slack sends, DB writes, payments all fire for real. Ask the user first when downstreams have side effects. |
-+| "I'll just run `test_workflow` to see what happens" | Invoke `n8n-workflow-lifecycle-official` `references/TESTING.md`. `test_workflow` uses supplied pin data for triggers, credentialed nodes and HTTP Request nodes. Unpinned nodes, including Code I/O, Data Tables, file operations and sub-workflow calls, can still cause real effects. Review the pin map and obtain authorization for those effects before running. |
++| "I'll just run `test_workflow` to see what happens" | Invoke `n8n-workflow-lifecycle-official` `references/TESTING.md`. `test_workflow` uses supplied pin data for triggers, credentialed nodes and HTTP Request nodes. Unpinned nodes, including Execute Command (shell commands), Code I/O, Data Tables, file operations and sub-workflow calls, can still cause real effects. Review the pin map and obtain authorization for those effects before running. |
  
  **The meta-skill (this document) tells you WHICH skill applies. The Skill tool loads the actual rules.** Reading the meta-skill once at session start is not a substitute for invoking the skill at the moment of decision.
  
 diff --git a/skills/n8n-workflow-lifecycle-official/SKILL.md b/skills/n8n-workflow-lifecycle-official/SKILL.md
 --- a/skills/n8n-workflow-lifecycle-official/SKILL.md
 +++ b/skills/n8n-workflow-lifecycle-official/SKILL.md
-@@ -9,7 +9,7 @@
+@@ -9,15 +9,15 @@
  
  1. **PLAN.** Gather requirements, ask clarifying questions, search for existing workflows / sub-workflows that already do this.
  2. **BUILD.** Write SDK code (with skills: subworkflows, node-config, expressions, code-nodes; readability section below). Use `validate_node_config` as a side-channel for iteration, debugging, or small single-node edits: clean per-parameter errors without full-graph noise. Not a replacement for `validate_workflow` in VALIDATE.
 -3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, then have the user verify per-node credentials and create anything you couldn't (missing credentials, folders, etc).
 +3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, identify missing credentials or resources and which unpinned nodes need them. Verify credentials before any real integration run; fully pinned integrations can be tested with synthetic data first.
  4. **TEST.** `test_workflow` with `prepare_workflow_pin_data`; iterate until output matches intent.
- 5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean.
+-5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean.
++5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean and required credentials and resources are configured and verified for every integration that will run when published. A pinned test does not satisfy those prerequisites. If any remain unresolved, keep the workflow unpublished and report the blockers.
  6. **HANDOFF.** Production handoff: how to trigger it, what it returns, what to watch, what they should know to use it well.
-@@ -17,7 +17,7 @@
+ 
  Skipping a stage produces workflows that look done but break in production, or solve the wrong problem entirely. Three most common skips:
  
  - **Build before plan.** "User asked for X, I'll start coding" without confirming what X means, whether the same logic already exists as a sub-workflow, or which folder/project it belongs in. Cheaper to ask one clarifying question than to rebuild after.
@@ -414,7 +429,7 @@ diff --git a/skills/n8n-workflow-lifecycle-official/SKILL.md b/skills/n8n-workfl
  - **Publish without test.** Validation passing means the SDK is well-formed; it does NOT mean the workflow is correct.
  
  ## Non-negotiables
-@@ -114,14 +114,14 @@
+@@ -114,14 +114,16 @@
  
  ## User-side wire-up (part of stage 3)
  
@@ -427,9 +442,20 @@ diff --git a/skills/n8n-workflow-lifecycle-official/SKILL.md b/skills/n8n-workfl
  - **MCP access toggle for user created workflows.** Workflows you create via the MCP are MCP-accessible by default. The toggle only matters when the test depends on a UI-created workflow being callable from the MCP. See `references/MCP_ACCESS_PER_WORKFLOW.md`.
  
 -Don't proceed to TEST until these are confirmed done.
-+Before TEST, confirm MCP access and inspect the pin map. Resolve prerequisites for every node that will run for real, and obtain authorization for its effects. Keep missing setup for fully pinned integrations in the handoff; a simulated pass does not close those checks.
++Before TEST, inspect the pin map. Confirm the per-workflow MCP toggle when the test needs to call a UI-created workflow through MCP; do not require a separate toggle-setup step for unrelated tests. Respect returned access errors for every workflow, including agent-created workflows whose access has been revoked. Resolve prerequisites for every node that will run for real, and obtain authorization for its effects.
++
++Fully pinned integrations may be simulated while their setup is pending. Before PUBLISH, complete and verify their required credentials and resources too; pin data is per-test and does not supply production dependencies. If setup remains incomplete, leave the workflow unpublished and hand off the draft with its blockers. Do not defer required production setup to a post-publication handoff, or claim that a simulated pass verified a real integration.
  
  ## Handoff: production handoff (stage 6)
+ 
+@@ -134,7 +136,7 @@
+ - **How to invoke it for real, with an example.** "Hit the webhook with `curl -X POST <url> -d '{...}'`," "trigger manually from the UI," "wait until 09:00 UTC for the first scheduled run."
+ - **What to watch.** Failure modes that surface as alerts/errors, rate-limit ceilings on upstream services, and where to look first when something breaks (executions tab, error workflow, audit log, etc.).
+ - **MCP access status.** If you created the workflow via the MCP, it's already MCP-accessible. Let the user know they can revoke access in Settings if they want to lock it down. If they hand-built it in the UI, they need to flip MCP access on for any other agent to call it.
+-- **Anything still pending on their side.** Secret rotation if a token was pasted in chat, follow-up wiring you couldn't reach, known TODOs left in stickies.
++- **Non-blocking follow-ups.** Only improvements that do not prevent the published workflow from operating. Required credentials, resources, wiring and exposed-secret remediation must be completed before publication; otherwise hand off an unpublished draft and its blockers.
+ 
+ Keep it tight: half a dozen bullets, not a wall of text. The user shouldn't have to ask "ok, what now?"
  
 diff --git a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
 --- a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md

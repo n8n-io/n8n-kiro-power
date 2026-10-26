@@ -57,6 +57,11 @@ not claim older releases are incompatible. The per-client connect screen in
       during review. Align testing summaries with supplied pin data: pinned
       integrations can be simulated before credential setup, while prerequisites
       and authorization are required for nodes that run for real.
+- [x] Keep credentials and resources as an explicit publication gate even when
+      earlier tests use fully pinned integrations. Scope the UI-created-workflow
+      MCP-toggle check to tests that call those workflows through MCP, respect
+      all returned access errors, and name Execute Command in the router's
+      unpinned-effects warning. Regenerate and verify the shared snapshot.
 - [x] Keep the final Power name **`n8n-workflow-dev`**, confirmed by the maintainer
       on 2026-10-26. The manifest, README and connection skill use this name.
 - [x] Point support to the [n8n community](https://community.n8n.io). GitHub's

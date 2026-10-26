@@ -63,11 +63,13 @@ Invoke `n8n-error-handling-official` if any of these are true:
 
 For internal one-off scripts (manual trigger), error handling can be looser.
 
-### 4. Credentials, not tokens in text fields
+### 4. Credentials and production prerequisites
 
 Walk every node config for tokens, API keys, or auth values pasted into text parameters. They should be referenced via the credential system.
 
 If you find any, invoke `n8n-credentials-and-security-official` and migrate before publishing.
+
+Confirm that every integration that will run when published has its required credentials selected and verified, and its required resources and wiring in place. Pinned tests may run before this setup, but their simulated output does not satisfy this publication gate. If a prerequisite is missing or unverified, keep the workflow unpublished and report the blocker. Do not run side-effecting integrations merely to prove readiness without authorization for those effects.
 
 ### 5. `test_workflow` produced expected output
 
