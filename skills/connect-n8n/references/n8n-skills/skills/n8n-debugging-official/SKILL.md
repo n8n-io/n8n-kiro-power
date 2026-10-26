@@ -98,10 +98,11 @@ If the manual shape-vs-config diff is tedious (deep params, AI tool subnodes, ma
 
 ### Step 5: test with pinned data
 
-```
-prepare_workflow_pin_data({ workflowId: '<id>' })
-test_workflow({ workflowId: '<id>' })
-```
+Read the live tool schemas and follow the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md), including its checks for real effects from unpinned nodes.
+
+1. Call `prepare_workflow_pin_data({ workflowId: '<id>' })` to obtain the node schemas. This returns schemas, not sample data.
+2. Generate sample values matching those schemas and assemble `pinData`, keyed by node name with items wrapped in `{ json: ... }`. Include every required pin and any additional pins needed to avoid unauthorized effects.
+3. Call `test_workflow({ workflowId: '<id>', pinData })` with that generated object. Inspect the returned execution and its pin map before reporting what ran or was simulated.
 
 Controlled input isolates "workflow broken?" from "input weird?". If pinned data works but real input fails, the issue is in real input handling.
 

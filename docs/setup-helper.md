@@ -20,10 +20,13 @@ same-origin OAuth server advertising public clients, S256 PKCE and refresh.
 Cross-origin identity providers and redirects are unsupported.
 
 Check `node --version`: Node.js 22+ must be available in Kiro's environment.
-Explain a missing runtime; do not install one automatically. Setup currently
-accepts Kiro IDE 1.1.70, 1.2.4 and 1.2.37; the initial release supports macOS only.
-If detection fails, check Help > About and pass the
-actual version with `--kiro-version`; never supply an older version to bypass it.
+Explain a missing runtime; do not install one automatically. Setup accepts all
+local Kiro IDE versions. The tested versions are 1.1.70, 1.2.4, 1.2.37 and 1.4.26;
+other or undetected versions show a warning and continue. If detection fails
+(for example, `kiro` is not on PATH on Windows or Linux), no override is needed.
+For accurate diagnostics, you may pass the actual Help > About version with
+`--kiro-version`. Live IDE checks so far cover macOS; helper CI covers all three
+platforms. The supported n8n minimum is 2.43.7.
 
 For an installed power, resolve `scripts/setup.mjs` relative to the installed
 connect-n8n skill. Quote its absolute path and user inputs for the shell. Do not
@@ -83,10 +86,14 @@ browser request. After consent, repeat the connection skill's read-only prefligh
 
 ## Troubleshooting
 
-- **Corrupted terminal command or no output:** long single-line commands have
-  rendered incorrectly in Kiro. Do not retry variations or write a wrapper
-  script. Give the user the exact command to run in their terminal and ask for
-  its JSON result. Running the helper by hand uses the same setup path.
+- **No output with exit 0:** older helpers could silently skip execution when
+  launched through a symlink (including macOS `/tmp` → `/private/tmp`). Update
+  the installed power and run the helper with `--help` to verify its entry point.
+  The current helper resolves the launch path before running. Do not infer a
+  terminal failure from empty output alone.
+- **Corrupted terminal command:** long single-line commands have rendered
+  incorrectly in Kiro. Give the user the exact short command to run in their
+  terminal and ask for its JSON result. Do not write a wrapper script.
 - **No tools:** inspect the endpoint, connection error and authorization state.
   Check reachability from Kiro; localhost in a remote session names that remote
   machine. The helper targets local IDE sessions.
@@ -134,8 +141,8 @@ browser request. After consent, repeat the connection skill's read-only prefligh
   using the old bundled server. Public-client setup supplies an ID without a
   secret. Do not assume consent failed or repeatedly restart authorization.
 - **Missing tools or workflows:** check n8n version, features/license, builder
-  settings, OAuth grant, user/project access and workflow exposure. The 2.34.0
-  tool-name floor does not establish OAuth compatibility for every version.
+  settings, OAuth grant, user/project access and workflow exposure. Use n8n
+  2.43.7 or later for the supported OAuth and workflow baseline.
   Reauthorization cannot enable features or grant a project role. Search previews
   can include workflows not Available in MCP; follow returned access errors
   before inspecting or running them. Missing tools do not prove an empty instance.

@@ -277,24 +277,10 @@ index c3dc77e..7e0aa67 100644
  
  ### Rate limits
  
-diff --git a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
-index 836f5be..a87416f 100644
---- a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
-+++ b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
-@@ -73,7 +73,7 @@ Before walking the per-domain list:
- 
- ### Set node antipattern
- 
--- [ ] **Set node feeding only 0 or 1 downstream consumer.** Most common antipattern in the pack. Delete + inline the expression at the consumer. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
-+- [ ] **Set node only preparing expressions for 0 or 1 downstream consumer.** Inline when this preserves behavior; retain field whitelists (Keep Only Set), sub-workflow return contracts, and required transformations. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
- - [ ] **Set node before a Data Table Insert/Update mapping fields to schema.** Map directly in the Data Table node's per-column expression slots. → [n8n-data-tables-official strong defaults](../../n8n-data-tables-official/SKILL.md)
- - [ ] **Set node building an email/Slack body.** Build the body inline in the comms node's body field with an expression. → [COMMS_NODES.md](../../n8n-node-configuration-official/references/COMMS_NODES.md)
- - [ ] **Multiple consecutive Set nodes each defining one field.** Collapse, or eliminate. → [n8n-expressions-official](../../n8n-expressions-official/SKILL.md)
 diff --git a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
-index f153b0c..d2bce8c 100644
 --- a/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
 +++ b/skills/n8n-workflow-lifecycle-official/references/VALIDATION_CHECKLIST.md
-@@ -16,7 +16,7 @@ Walk the workflow with these questions in mind. These are patterns that recur ac
+@@ -16,7 +16,7 @@
  
  **Set nodes:**
  - For each Set node, count how many downstream nodes reference its output fields.
@@ -303,3 +289,192 @@ index f153b0c..d2bce8c 100644
  - Common offender: a Set node right before a Data Table Insert / Update node, mapping fields to match schema. Map directly in the Insert/Update node's expression slots.
  - Common offender: a Set node building a body before an Email/Slack node. Build the body in the body field with an expression.
  
+@@ -63,11 +63,13 @@
+ 
+ For internal one-off scripts (manual trigger), error handling can be looser.
+ 
+-### 4. Credentials, not tokens in text fields
++### 4. Credentials and production prerequisites
+ 
+ Walk every node config for tokens, API keys, or auth values pasted into text parameters. They should be referenced via the credential system.
+ 
+ If you find any, invoke `n8n-credentials-and-security-official` and migrate before publishing.
++
++Confirm that every integration that will run when published has its required credentials selected and verified, and its required resources and wiring in place. Pinned tests may run before this setup, but their simulated output does not satisfy this publication gate. If a prerequisite is missing or unverified, keep the workflow unpublished and report the blocker. Do not run side-effecting integrations merely to prove readiness without authorization for those effects.
+ 
+ ### 5. `test_workflow` produced expected output
+ 
+diff --git a/skills/n8n-debugging-official/SKILL.md b/skills/n8n-debugging-official/SKILL.md
+--- a/skills/n8n-debugging-official/SKILL.md
++++ b/skills/n8n-debugging-official/SKILL.md
+@@ -98,10 +98,11 @@
+ 
+ ### Step 5: test with pinned data
+ 
+-```
+-prepare_workflow_pin_data({ workflowId: '<id>' })
+-test_workflow({ workflowId: '<id>' })
+-```
++Read the live tool schemas and follow the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md), including its checks for real effects from unpinned nodes.
++
++1. Call `prepare_workflow_pin_data({ workflowId: '<id>' })` to obtain the node schemas. This returns schemas, not sample data.
++2. Generate sample values matching those schemas and assemble `pinData`, keyed by node name with items wrapped in `{ json: ... }`. Include every required pin and any additional pins needed to avoid unauthorized effects.
++3. Call `test_workflow({ workflowId: '<id>', pinData })` with that generated object. Inspect the returned execution and its pin map before reporting what ran or was simulated.
+ 
+ Controlled input isolates "workflow broken?" from "input weird?". If pinned data works but real input fails, the issue is in real input handling.
+ 
+diff --git a/skills/n8n-extending-mcp-official/SKILL.md b/skills/n8n-extending-mcp-official/SKILL.md
+--- a/skills/n8n-extending-mcp-official/SKILL.md
++++ b/skills/n8n-extending-mcp-official/SKILL.md
+@@ -6,12 +6,12 @@
+ <!-- TEMPORARY: update whenever n8n mcp capacities are added. a lot of listed functionalities missing are coming soon -->
+ # n8n Extending MCP
+ 
+-Any n8n workflow with MCP access enabled becomes a tool the coding agent can call by name. Two common cases:
++A workflow with MCP access enabled and a supported trigger can be discovered and executed through the instance-level MCP tools. Two common cases:
+ 
+ 1. **Wrap n8n capabilities the MCP doesn't expose.** The MCP covers workflow CRUD, validation, execution, data tables, credential listing, execution search, folder create/rename/move and folder/project listing, tag listing and attach/detach. Still missing: folder deletion, project create/rename, tag rename/delete, instance metadata, credential creation. Build a workflow that hits the n8n API and exposes the result as an agent tool.
+ 2. **Expose a general-purpose workflow as a tool.** A workflow that has nothing to do with n8n itself (calls a third-party API, runs internal business logic, looks something up in a private system) can be MCP-callable. Lets the agent invoke real operations during a coding session.
+ 
+-The MCP calls your workflow as if it were a native tool: input from the `Execute Workflow Trigger`, output from the workflow's last node.
++The agent calls `execute_workflow` with a supported trigger and retrieves the result with `get_workflow_execution`. An `Execute Workflow Trigger` is for sub-workflow calls and is not supported by this MCP execution path. Read the live tool schema and the workflow's `triggerInfo` before choosing a trigger.
+ 
+ ## When to reach for this
+ 
+@@ -42,7 +42,7 @@
+ ## Protocol
+ 
+ - **Search for existing wrappers first.** `search_workflows({ tags: ['tool'] })` and a capability keyword search. If something matches, use it instead of duplicating.
+-- **For case 1, build as a stateless, queryable utility.** Takes input, calls n8n's API, returns the result. No side effects. Case 2 may legitimately have side effects (sending, writing); name them in the tool description.
++- **Prefer read-only utilities.** A wrapper for deletion, creation, or other writes has real effects even in case 1. Name those effects in the workflow description and obtain authorization before executing them.
+ - **Offer to edit the agent's context file yourself** (CLAUDE.md, AGENTS.md, GEMINI.md, whatever the user's agent reads on session start) to add an entry for the new tool. You have Edit/Write tools, so there's no reason to make the user paste a snippet manually. Ask first since it's their config file, then edit it directly when they say yes.
+ 
+ ## The pattern, end to end
+@@ -54,15 +54,23 @@
+    Want me to create it?"
+ 3. User: yes.
+ 4. You build the workflow:
+-   - Trigger: Execute Workflow Trigger with declared inputs.
++   - Trigger: a supported Webhook, Chat, Form, or Schedule Trigger. For a
++     utility that accepts structured input, a Webhook Trigger is one option;
++     choose its method, request contract and authentication deliberately.
++     Adding a webhook also exposes an HTTP route when published; protect it
++     for the intended callers. Manual Trigger is available in manual mode.
+    - Body: whatever logic the tool needs (HTTP Request to n8n's API, a
+      third-party call, internal computation).
+    - Output: structured response.
+-5. Validate, test, publish.
++5. Validate and test with generated pin data. Verify real effects and
++   credentials before an authorized live run. Publish only when authorized
++   and needed for production execution; manual execution can run the draft.
+ 6. Ask the user if you can add an entry for this tool to their agent context
+    file (CLAUDE.md / AGENTS.md / etc.) so future sessions know to search for
+    it by name. Edit the file directly when they say yes.
+-7. The workflow is immediately callable: agent-created workflows have `availableInMCP: true` set by default.
++7. Verify MCP availability, access and the supported trigger. Production
++   execution requires a published version. Agent-created workflows normally
++   have `availableInMCP: true`, but that alone does not prove executability.
+ ```
+ 
+ ## Common case-1 wrappers (missing MCP capabilities)
+@@ -94,12 +102,12 @@
+ 
+ ## How the agent invokes a tool workflow
+ 
+-The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Discovery and invocation are two steps:
++The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Use the native tools in this order:
+ 
+-1. **Discover** via `search_workflows({ query: '<keyword>' })`. Workflows with MCP access on return `availableInMCP: true`. Filter for that.
+-2. **Invoke** via `execute_workflow({ workflowId, inputs })`. Read the input schema first with `get_workflow_details`. The `Execute Workflow Trigger` defines typed fields.
+-
+-Output is whatever the workflow's last node returns.
++1. **Discover** via `search_workflows({ query: '<keyword>' })`. Confirm `availableInMCP` and access with `get_workflow_details`; search can return previews of workflows that are not exposed.
++2. **Inspect** the live `execute_workflow` schema and the workflow's returned `triggerInfo`. Production mode supports Webhook, Chat, Form and Schedule triggers; manual mode additionally supports Manual Trigger. Do not use an Execute Workflow Trigger for this path. Select a supported trigger by its exact node name.
++3. **Invoke** via `execute_workflow({ workflowId, executionMode, triggerNodeName, inputs })`. `triggerNodeName` is required when passing `inputs`; input variants are `webhook`, `chat` or `form`, with the fields advertised by the live schema. Omit `inputs` for a trigger that takes none. Set `executionMode` to `"manual"` when testing or validating the current workflow, or `"production"` only when intentionally running the published workflow. Both modes can cause real effects: apply the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md) and obtain authorization for those effects before execution.
++4. **Read the result.** Execution returns a start status and `executionId`, not the workflow's final output. If it started, use `get_workflow_execution({ workflowId, executionId, includeData: true })` until a terminal result is available. Inspect errors and the relevant node outputs before reporting success. A timeout or a still-running execution remains unverified; do not start another execution merely because the result is pending.
+ 
+ **MCP access defaults:** Agent-created workflows default to `availableInMCP: true`. UI-created workflows may default off, in which case the user has to toggle MCP access on in the workflow's settings before it appears in search results. Either way, the user can flip it off later to restrict access.
+ 
+diff --git a/skills/using-n8n-skills-official/SKILL.md b/skills/using-n8n-skills-official/SKILL.md
+--- a/skills/using-n8n-skills-official/SKILL.md
++++ b/skills/using-n8n-skills-official/SKILL.md
+@@ -51,7 +51,7 @@
+ | "I'll wrap this in a Merge with 3 sources" | Invoke `n8n-node-configuration-official` `references/MERGE_NODE.md`. Merge defaults to 2 inputs, and 3+ sources need `numberOfInputs` set explicitly. |
+ | "I'll fan out these three slow steps to run in parallel" | Invoke `n8n-workflow-lifecycle-official` and read the Execution model section. n8n executes fan-out branches sequentially (top-to-bottom by Y-position), not concurrently. For real concurrency, see `n8n-loops-official` and `n8n-subworkflows-official` (`mode: 'each'` + `waitForSubWorkflow: false`). |
+ | "User said which project, I'll just build it" | Invoke `n8n-workflow-lifecycle-official`. Project is not folder. Ask about folder placement BEFORE building. `create_folder` works on a registered instance. If the folder tools are absent, the instance isn't registered, and folders are blocked in the UI too, so the user must register it first (free Community-edition registration in Settings), not create the folder by hand. |
+-| "I'll just run `test_workflow` to see what happens" | Invoke `n8n-workflow-lifecycle-official` `references/TESTING.md`. `test_workflow` mocks the trigger only. Slack sends, DB writes, payments all fire for real. Ask the user first when downstreams have side effects. |
++| "I'll just run `test_workflow` to see what happens" | Invoke `n8n-workflow-lifecycle-official` `references/TESTING.md`. `test_workflow` uses supplied pin data for triggers, credentialed nodes and HTTP Request nodes. Unpinned nodes, including Execute Command (shell commands), Code I/O, Data Tables, file operations and sub-workflow calls, can still cause real effects. Review the pin map and obtain authorization for those effects before running. |
+ 
+ **The meta-skill (this document) tells you WHICH skill applies. The Skill tool loads the actual rules.** Reading the meta-skill once at session start is not a substitute for invoking the skill at the moment of decision.
+ 
+diff --git a/skills/n8n-workflow-lifecycle-official/SKILL.md b/skills/n8n-workflow-lifecycle-official/SKILL.md
+--- a/skills/n8n-workflow-lifecycle-official/SKILL.md
++++ b/skills/n8n-workflow-lifecycle-official/SKILL.md
+@@ -9,15 +9,15 @@
+ 
+ 1. **PLAN.** Gather requirements, ask clarifying questions, search for existing workflows / sub-workflows that already do this.
+ 2. **BUILD.** Write SDK code (with skills: subworkflows, node-config, expressions, code-nodes; readability section below). Use `validate_node_config` as a side-channel for iteration, debugging, or small single-node edits: clean per-parameter errors without full-graph noise. Not a replacement for `validate_workflow` in VALIDATE.
+-3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, then have the user verify per-node credentials and create anything you couldn't (missing credentials, folders, etc).
++3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, identify missing credentials or resources and which unpinned nodes need them. Verify credentials before any real integration run; fully pinned integrations can be tested with synthetic data first.
+ 4. **TEST.** `test_workflow` with `prepare_workflow_pin_data`; iterate until output matches intent.
+-5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean.
++5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean and required credentials and resources are configured and verified for every integration that will run when published. A pinned test does not satisfy those prerequisites. If any remain unresolved, keep the workflow unpublished and report the blockers.
+ 6. **HANDOFF.** Production handoff: how to trigger it, what it returns, what to watch, what they should know to use it well.
+ 
+ Skipping a stage produces workflows that look done but break in production, or solve the wrong problem entirely. Three most common skips:
+ 
+ - **Build before plan.** "User asked for X, I'll start coding" without confirming what X means, whether the same logic already exists as a sub-workflow, or which folder/project it belongs in. Cheaper to ask one clarifying question than to rebuild after.
+-- **Test before user-side wire-up.** Running `test_workflow` before the user has verified credentials per node hits the wrong service or 401s. Get the user-side setup done as part of VALIDATE.
++- **Real integration run before user-side wire-up.** A fully pinned integration uses synthetic data and does not verify credentials or the real service. Verify credentials and resources before running that integration unpinned; inspect all other unpinned nodes for real effects even during a simulated test.
+ - **Publish without test.** Validation passing means the SDK is well-formed; it does NOT mean the workflow is correct.
+ 
+ ## Non-negotiables
+@@ -114,14 +114,16 @@
+ 
+ ## User-side wire-up (part of stage 3)
+ 
+-There are things the user has to do that you can't, and they need to be done before testing, otherwise the test fires against the wrong credential, hits a missing folder, or 401s. Surface these as a short list during VALIDATE, before TEST:
++Surface missing setup during VALIDATE. Credentials and external resources must be ready before the nodes that use them run for real. Fully pinned integrations can be simulated before that setup, but their credentials, connectivity and real behavior remain unverified:
+ 
+ - **Verify credentials per node.** `newCredential('Label')` is cosmetic. n8n auto-assigns the most recently edited credential of the right type, which silently picks the wrong one when the user has multiples (prod vs staging Gmail, two API keys). Tell them: "open every node that uses a credential and confirm the right one is selected." See `n8n-credentials-and-security-official` non-negotiable #2.
+ - **Create missing credentials.** If the user pasted a secret in chat or the workflow needs an account that doesn't exist yet, name the credential *type* and have them create it in the UI.
+ - **Register for folders (only if the tools are missing).** Folder tools need a registered instance. If they're absent, the user registers (free, in Settings) before you can create or place folders; otherwise you handle folders yourself. See `references/FOLDER_LIMITATIONS.md`.
+ - **MCP access toggle for user created workflows.** Workflows you create via the MCP are MCP-accessible by default. The toggle only matters when the test depends on a UI-created workflow being callable from the MCP. See `references/MCP_ACCESS_PER_WORKFLOW.md`.
+ 
+-Don't proceed to TEST until these are confirmed done.
++Before TEST, inspect the pin map. Confirm the per-workflow MCP toggle when the test needs to call a UI-created workflow through MCP; do not require a separate toggle-setup step for unrelated tests. Respect returned access errors for every workflow, including agent-created workflows whose access has been revoked. Resolve prerequisites for every node that will run for real, and obtain authorization for its effects.
++
++Fully pinned integrations may be simulated while their setup is pending. Before PUBLISH, complete and verify their required credentials and resources too; pin data is per-test and does not supply production dependencies. If setup remains incomplete, leave the workflow unpublished and hand off the draft with its blockers. Do not defer required production setup to a post-publication handoff, or claim that a simulated pass verified a real integration.
+ 
+ ## Handoff: production handoff (stage 6)
+ 
+@@ -134,7 +136,7 @@
+ - **How to invoke it for real, with an example.** "Hit the webhook with `curl -X POST <url> -d '{...}'`," "trigger manually from the UI," "wait until 09:00 UTC for the first scheduled run."
+ - **What to watch.** Failure modes that surface as alerts/errors, rate-limit ceilings on upstream services, and where to look first when something breaks (executions tab, error workflow, audit log, etc.).
+ - **MCP access status.** If you created the workflow via the MCP, it's already MCP-accessible. Let the user know they can revoke access in Settings if they want to lock it down. If they hand-built it in the UI, they need to flip MCP access on for any other agent to call it.
+-- **Anything still pending on their side.** Secret rotation if a token was pasted in chat, follow-up wiring you couldn't reach, known TODOs left in stickies.
++- **Non-blocking follow-ups.** Only improvements that do not prevent the published workflow from operating. Required credentials, resources, wiring and exposed-secret remediation must be completed before publication; otherwise hand off an unpublished draft and its blockers.
+ 
+ Keep it tight: half a dozen bullets, not a wall of text. The user shouldn't have to ask "ok, what now?"
+ 
+diff --git a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
+--- a/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
++++ b/skills/n8n-workflow-lifecycle-official/references/REVIEW_CHECKLIST.md
+@@ -10,7 +10,7 @@
+ 
+ | Severity | Meaning | Action |
+ |---|---|---|
+-| **MUST FIX** | Ship-blocker. Security hole, broken connection, or production-breaking bug. | Stop the workflow if active, fix before re-enabling. |
++| **MUST FIX** | Ship-blocker. Security hole, broken connection, or production-breaking bug. | Report the risk and recommend stopping the active workflow. Stop, unpublish, edit or re-enable only with authorization for that action; a review request alone does not authorize changes. |
+ | **SHOULD FIX** | Real issue. Antipattern, missing error handling on production paths, broken contracts. | Plan a follow-up, fix in the next change. |
+ | **NICE TO HAVE** | Polish. Naming, descriptions, conventions. | Clean up opportunistically. |
+ 
+@@ -73,7 +73,7 @@
+ 
+ ### Set node antipattern
+ 
+-- [ ] **Set node feeding only 0 or 1 downstream consumer.** Most common antipattern in the pack. Delete + inline the expression at the consumer. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
++- [ ] **Set node only preparing expressions for 0 or 1 downstream consumer.** Inline when this preserves behavior; retain field whitelists (Keep Only Set), sub-workflow return contracts, and required transformations. → [n8n-expressions-official "The Set-node antipattern"](../../n8n-expressions-official/SKILL.md)
+ - [ ] **Set node before a Data Table Insert/Update mapping fields to schema.** Map directly in the Data Table node's per-column expression slots. → [n8n-data-tables-official strong defaults](../../n8n-data-tables-official/SKILL.md)
+ - [ ] **Set node building an email/Slack body.** Build the body inline in the comms node's body field with an expression. → [COMMS_NODES.md](../../n8n-node-configuration-official/references/COMMS_NODES.md)
+ - [ ] **Multiple consecutive Set nodes each defining one field.** Collapse, or eliminate. → [n8n-expressions-official](../../n8n-expressions-official/SKILL.md)

@@ -9,15 +9,15 @@ description: Use when starting, designing, organizing, finishing, or shipping an
 
 1. **PLAN.** Gather requirements, ask clarifying questions, search for existing workflows / sub-workflows that already do this.
 2. **BUILD.** Write SDK code (with skills: subworkflows, node-config, expressions, code-nodes; readability section below). Use `validate_node_config` as a side-channel for iteration, debugging, or small single-node edits: clean per-parameter errors without full-graph noise. Not a replacement for `validate_workflow` in VALIDATE.
-3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, then have the user verify per-node credentials and create anything you couldn't (missing credentials, folders, etc).
+3. **VALIDATE.** `validate_workflow` + `get_workflow_details` for connections, identify missing credentials or resources and which unpinned nodes need them. Verify credentials before any real integration run; fully pinned integrations can be tested with synthetic data first.
 4. **TEST.** `test_workflow` with `prepare_workflow_pin_data`; iterate until output matches intent.
-5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean.
+5. **PUBLISH.** `publish_workflow` only after stages 3 and 4 are clean and required credentials and resources are configured and verified for every integration that will run when published. A pinned test does not satisfy those prerequisites. If any remain unresolved, keep the workflow unpublished and report the blockers.
 6. **HANDOFF.** Production handoff: how to trigger it, what it returns, what to watch, what they should know to use it well.
 
 Skipping a stage produces workflows that look done but break in production, or solve the wrong problem entirely. Three most common skips:
 
 - **Build before plan.** "User asked for X, I'll start coding" without confirming what X means, whether the same logic already exists as a sub-workflow, or which folder/project it belongs in. Cheaper to ask one clarifying question than to rebuild after.
-- **Test before user-side wire-up.** Running `test_workflow` before the user has verified credentials per node hits the wrong service or 401s. Get the user-side setup done as part of VALIDATE.
+- **Real integration run before user-side wire-up.** A fully pinned integration uses synthetic data and does not verify credentials or the real service. Verify credentials and resources before running that integration unpinned; inspect all other unpinned nodes for real effects even during a simulated test.
 - **Publish without test.** Validation passing means the SDK is well-formed; it does NOT mean the workflow is correct.
 
 ## Non-negotiables
@@ -114,14 +114,16 @@ For the full case-by-case guide and user-facing message, read `references/MCP_AC
 
 ## User-side wire-up (part of stage 3)
 
-There are things the user has to do that you can't, and they need to be done before testing, otherwise the test fires against the wrong credential, hits a missing folder, or 401s. Surface these as a short list during VALIDATE, before TEST:
+Surface missing setup during VALIDATE. Credentials and external resources must be ready before the nodes that use them run for real. Fully pinned integrations can be simulated before that setup, but their credentials, connectivity and real behavior remain unverified:
 
 - **Verify credentials per node.** `newCredential('Label')` is cosmetic. n8n auto-assigns the most recently edited credential of the right type, which silently picks the wrong one when the user has multiples (prod vs staging Gmail, two API keys). Tell them: "open every node that uses a credential and confirm the right one is selected." See `n8n-credentials-and-security-official` non-negotiable #2.
 - **Create missing credentials.** If the user pasted a secret in chat or the workflow needs an account that doesn't exist yet, name the credential *type* and have them create it in the UI.
 - **Register for folders (only if the tools are missing).** Folder tools need a registered instance. If they're absent, the user registers (free, in Settings) before you can create or place folders; otherwise you handle folders yourself. See `references/FOLDER_LIMITATIONS.md`.
 - **MCP access toggle for user created workflows.** Workflows you create via the MCP are MCP-accessible by default. The toggle only matters when the test depends on a UI-created workflow being callable from the MCP. See `references/MCP_ACCESS_PER_WORKFLOW.md`.
 
-Don't proceed to TEST until these are confirmed done.
+Before TEST, inspect the pin map. Confirm the per-workflow MCP toggle when the test needs to call a UI-created workflow through MCP; do not require a separate toggle-setup step for unrelated tests. Respect returned access errors for every workflow, including agent-created workflows whose access has been revoked. Resolve prerequisites for every node that will run for real, and obtain authorization for its effects.
+
+Fully pinned integrations may be simulated while their setup is pending. Before PUBLISH, complete and verify their required credentials and resources too; pin data is per-test and does not supply production dependencies. If setup remains incomplete, leave the workflow unpublished and hand off the draft with its blockers. Do not defer required production setup to a post-publication handoff, or claim that a simulated pass verified a real integration.
 
 ## Handoff: production handoff (stage 6)
 
@@ -134,7 +136,7 @@ What to include:
 - **How to invoke it for real, with an example.** "Hit the webhook with `curl -X POST <url> -d '{...}'`," "trigger manually from the UI," "wait until 09:00 UTC for the first scheduled run."
 - **What to watch.** Failure modes that surface as alerts/errors, rate-limit ceilings on upstream services, and where to look first when something breaks (executions tab, error workflow, audit log, etc.).
 - **MCP access status.** If you created the workflow via the MCP, it's already MCP-accessible. Let the user know they can revoke access in Settings if they want to lock it down. If they hand-built it in the UI, they need to flip MCP access on for any other agent to call it.
-- **Anything still pending on their side.** Secret rotation if a token was pasted in chat, follow-up wiring you couldn't reach, known TODOs left in stickies.
+- **Non-blocking follow-ups.** Only improvements that do not prevent the published workflow from operating. Required credentials, resources, wiring and exposed-secret remediation must be completed before publication; otherwise hand off an unpublished draft and its blockers.
 
 Keep it tight: half a dozen bullets, not a wall of text. The user shouldn't have to ask "ok, what now?"
 

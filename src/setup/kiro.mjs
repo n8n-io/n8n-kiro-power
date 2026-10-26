@@ -2,11 +2,11 @@ import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
-import { promisify } from 'node:util';
+import { promisify, stripVTControlCharacters } from 'node:util';
 import { fail } from './errors.mjs';
 import { SCOPES } from './discovery.mjs';
 
-export const SUPPORTED_KIRO_VERSIONS = ['1.1.70', '1.2.4', '1.2.37'];
+export const TESTED_KIRO_VERSIONS = ['1.1.70', '1.2.4', '1.2.37', '1.4.26'];
 
 export async function detectKiroVersion() {
   if (process.platform === 'darwin') {
@@ -21,10 +21,12 @@ export async function detectKiroVersion() {
   } catch { return undefined; }
 }
 
-export function requireSupportedKiro(version) {
-  if (!SUPPORTED_KIRO_VERSIONS.includes(version)) {
-    fail('KIRO_VERSION', `Setup supports Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(' or ')}. Check Help > About and supply --kiro-version only with the actual installed version.`);
-  }
+export function kiroVersionWarnings(version) {
+  if (TESTED_KIRO_VERSIONS.includes(version)) return [];
+  // Strip escape sequences and remaining controls before displaying CLI-supplied text.
+  const displayVersion = typeof version === 'string' ? stripVTControlCharacters(version).replace(/[\u0000-\u001f\u007f-\u009f]/g, '') : '';
+  const detected = displayVersion ? `Kiro IDE ${displayVersion} has not been tested with this helper.` : 'The Kiro IDE version could not be detected.';
+  return [`Warning: ${detected} Tested versions: ${TESTED_KIRO_VERSIONS.join(', ')}. Setup will continue. Authenticate in Kiro and verify a read-only workflow search.`];
 }
 
 export async function availablePort(port = 0) {

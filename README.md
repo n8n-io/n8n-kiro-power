@@ -4,26 +4,23 @@ Build, run, and debug [n8n](https://n8n.io) workflows using the routes and types
 in your editor workspace. The power connects to your own n8n instance through
 its built-in MCP server. Workflows remain editable and runnable without Kiro.
 
-**Ready for submission: release 1.0.1 is available on `main`.** The power's
-identifier is `n8n-workflow-dev`. On Kiro 1.2.37, the installed power passed public
-OAuth, native reads, draft creation, execution, wrong-output repair and runtime-error
-repair on released self-hosted n8n 2.43.7 and Cloud 2.43.5. Some calls omitted
-required pin data; guarded manual execution passed as a fallback. A separate
-HTTP-pinned simulation passed with the required arguments intact.
-Repository validation, a clean GitHub import, installed-helper setup and an
-authenticated native workflow read passed on the merged release. All acceptance
-gates are complete; the evidence and supported scope are recorded in the
-[release checklist](docs/release-checklist.md).
+The power's identifier is `n8n-workflow-dev`. This 1.0.2 compatibility update
+passed live public OAuth sign-in and native
+workflow reads on Kiro 1.4.26 against local n8n master (2.45.0). Earlier acceptance passed on
+Kiro 1.2.37 with released self-hosted n8n 2.43.7 and Cloud 2.43.5. See the
+[release checklist](docs/release-checklist.md) for evidence and known limitations.
 
 ## Requirements
 
-- **Kiro IDE 1.1.70, 1.2.4 or 1.2.37 on macOS**, in a local session; see the
-  release checklist for live validation. The initial release supports macOS only.
-  Newer Kiro versions are outside this release's supported range.
-  Windows and Linux helper checks run in CI, but their IDE flows are not verified.
+- **Kiro IDE**, in a local session. Setup accepts all versions, including
+  future versions and installations where the version cannot be detected.
+  Versions other than the tested 1.1.70, 1.2.4, 1.2.37 and 1.4.26 show a warning and
+  continue. Live IDE validation is recorded for macOS; Windows and Linux helper
+  checks run in CI, but their IDE flows are not yet verified.
 - **Node.js 22+**, available to commands run by Kiro.
-- **n8n 2.34.0+** for the workflow tool names. This is not a verified public-OAuth
-  version floor; see the release checklist for tested server versions.
+- **n8n 2.43.7+** is the supported minimum, based on the oldest released
+  self-hosted version with recorded public OAuth and workflow acceptance.
+  Earlier versions may work but are outside this verified baseline.
 - An owner/admin must enable **Settings > Instance-level MCP**. Workflow builder
   tools must also be enabled; self-hosted admins can disable them with
   `N8N_MCP_BUILDER_ENABLED=false`.
@@ -36,8 +33,10 @@ Instance-level MCP is generally available: see the
 and [the GA change](https://github.com/n8n-io/n8n/pull/34084).
 The power uses the [workflow management and builder tools](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/mcp-server-tools-reference/),
 including workflows containing AI Agent nodes. Standalone n8n Agents are a
-separate Preview feature and are outside this release. GA status does not
-establish the oldest n8n release compatible with this power's OAuth setup.
+separate Preview feature and are outside this release. The supported minimum
+covers OAuth setup and workflow use together. The
+[per-client connection screen](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/)
+was introduced in 2.33.0; that UI milestone alone does not verify this power.
 
 ## Install and connect
 
@@ -126,7 +125,7 @@ commit or share them.
 
 - [n8n privacy policy](https://n8n.io/legal/privacy/)
 - [Kiro data protection](https://kiro.dev/docs/privacy-and-security/data-protection/)
-- [Power support and issues](https://github.com/n8n-io/n8n-kiro-power/issues)
-- [n8n community support](https://community.n8n.io)
+- [Power and n8n community support](https://community.n8n.io) — include the
+  `n8n-workflow-dev` name and your Kiro/n8n versions. Repository Issues are disabled.
 
 [Apache-2.0 license](LICENSE)

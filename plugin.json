@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "n8n-workflow-dev",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Build, run, and debug n8n workflows inside Kiro against your own instance.",
   "author": {
     "name": "n8n",
@@ -9,13 +9,11 @@
   },
   "keywords": [
     "n8n",
-    "workflow",
-    "workflow automation",
-    "automation",
-    "integration",
+    "n8n workflows",
+    "n8n MCP",
+    "workflow debugging",
     "webhook",
-    "scheduled job",
-    "build a workflow"
+    "scheduled job"
   ],
   "license": "Apache-2.0",
   "homepage": "https://docs.n8n.io",

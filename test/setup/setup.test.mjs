@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, readdir, stat, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { runSetup } from '../../src/setup/setup.mjs';
+import { kiroVersionWarnings } from '../../src/setup/kiro.mjs';
 import { atomicWrite, parseConfig, readSnapshot, withLock } from '../../src/setup/storage.mjs';
 import { fixture } from './helpers.mjs';
 import { createServer } from 'node:net';
@@ -200,22 +201,111 @@ test('later port use does not invalidate a reused registration or cause another 
   assert.equal(f.count(), 1);
 });
 
-test('unsupported Kiro and invalid callback ports do not register', async t => {
-  const f = await fixture(t);
-  for (const kiroVersion of ['1.1.69', '1.2.5', '1.2.38', '1.2.4-beta.1', '1.2.37-beta.1', '9.0.0', undefined]) {
-    await assert.rejects(runSetup({ ...f.options, kiroVersion }, { ...f.deps, detectKiroVersion: async () => kiroVersion }), { code: 'KIRO_VERSION' });
+for (const kiroVersion of ['1.0.411', '1.1.69', '1.2.5', '1.2.38', '1.3.11', '1.4.0', '1.4.10', '9.0.0', '1.2.4-beta.1', '1.2.37-beta.1', undefined]) {
+  test(`untested Kiro ${kiroVersion ?? '(undetected)'} warns through dry-run, configure, reuse and repair`, async t => {
+    const f = await fixture(t);
+    const options = { ...f.options, kiroVersion };
+    const deps = { ...f.deps, detectKiroVersion: async () => kiroVersion };
+    const warning = kiroVersion ? `Kiro IDE ${kiroVersion} has not been tested` : 'version could not be detected';
+    const checkWarning = result => {
+      assert.ok(result.warnings.some(message => message.includes(warning) && message.includes('Setup will continue')));
+    };
+    const dryRun = await runSetup({ ...options, dryRun: true }, deps);
+    assert.equal(dryRun.status, 'dry_run');
+    checkWarning(dryRun);
+    assert.deepEqual(await readdir(f.root), []);
+    assert.equal(f.count(), 0);
+    const configured = await runSetup(options, deps);
+    assert.equal(configured.status, 'configured_awaiting_authorization');
+    checkWarning(configured);
+    const config = await readFile(f.configPath, 'utf8');
+    assert.equal(parseConfig(config).mcpServers['n8n-test'].oauth.clientId, 'test-client-1');
+    const reused = await runSetup(options, deps);
+    assert.equal(reused.registration, 'reused');
+    assert.equal(reused.changed, false);
+    checkWarning(reused);
+    assert.equal(await readFile(f.configPath, 'utf8'), config);
+    assert.equal(f.count(), 1);
+    const repaired = await runSetup({ ...options, command: 'repair', newRegistration: true }, deps);
+    assert.equal(repaired.status, 'configured_awaiting_authorization');
+    checkWarning(repaired);
+    assert.equal(f.count(), 2);
+    assert.equal(parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'].oauth.clientId, 'test-client-2');
+  });
+}
+
+test('non-string detected versions warn and persist as unknown through setup and repair', async t => {
+  for (const detectedVersion of [123, 0, true, false, {}, ['1.4.26'], null, undefined]) {
+    const f = await fixture(t);
+    const options = { ...f.options, kiroVersion: undefined };
+    const deps = { ...f.deps, detectKiroVersion: async () => detectedVersion };
+    const checkWarnings = warnings => assert.ok(warnings.some(message =>
+      message.includes('version could not be detected') && message.includes('Setup will continue')));
+    checkWarnings(kiroVersionWarnings(detectedVersion));
+    const dryRun = await runSetup({ ...options, dryRun: true }, deps);
+    assert.equal(dryRun.status, 'dry_run');
+    checkWarnings(dryRun.warnings);
+    assert.equal(f.count(), 0);
+    for (const operation of [options, options, { ...options, command: 'repair', newRegistration: true }]) {
+      const result = await runSetup(operation, deps);
+      assert.equal(result.status, 'configured_awaiting_authorization');
+      checkWarnings(result.warnings);
+      const records = Object.values(JSON.parse(await readFile(f.statePath, 'utf8')).connections);
+      assert.equal(records.length, 1);
+      assert.equal(records[0].kiroVersion, 'unknown');
+    }
+    assert.equal(f.count(), 2);
+    assert.equal((await runSetup({ ...options, command: 'doctor' }, deps)).status, 'configured_unverified');
   }
-  await assert.rejects(runSetup({ ...f.options, callbackPort: 0 }, f.deps), { code: 'CALLBACK_PORT' });
+});
+
+test('version warnings strip terminal escapes and controls without blocking setup', async t => {
+  const f = await fixture(t);
+  const cases = [
+    ['\u001b[31m9.0.0\u001b[0m', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b]0;fake title\u00079.0.0', '9.0.0 has not been tested'],
+    ['\u001b]8;;https://example.com\u001b\\9.0.0\u001b]8;;\u001b\\', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b]8;;https://example.com/(foo)\u00079.0.0\u001b]8;;\u0007', '9.0.0 has not been tested'],
+    ['\u001b]52;c;Y2xpcGJvYXJk\u00079.0.0', 'Kiro IDE 9.0.0 has not been tested'],
+    ['9.0.0\r\n\t\b\u0007\u007f\u0085', 'Kiro IDE 9.0.0 has not been tested'],
+    ['\u001b[31m1.4.26\u001b[0m', 'Kiro IDE 1.4.26 has not been tested'],
+    ['\u001b[31m\r\n\u0007', 'version could not be detected'],
+  ];
+  for (const [kiroVersion, expected] of cases) {
+    const options = { ...f.options, kiroVersion };
+    for (const dryRun of [true, false]) {
+      const result = await runSetup({ ...options, dryRun }, f.deps);
+      assert.equal(result.status, dryRun ? 'dry_run' : 'configured_awaiting_authorization');
+      assert.ok(result.warnings.some(message => message.includes(expected) && message.includes('Setup will continue')), JSON.stringify(kiroVersion));
+      for (const message of result.warnings) assert.doesNotMatch(message, /[\u0000-\u001f\u007f-\u009f]/);
+    }
+  }
+  assert.equal(f.count(), 1);
+});
+
+test('doctor and remove never require version detection', async t => {
+  const f = await fixture(t);
+  await runSetup(f.options, f.deps);
+  const options = { ...f.options, kiroVersion: undefined };
+  const deps = { ...f.deps, detectKiroVersion: () => { throw new Error('unexpected detection'); } };
+  assert.equal((await runSetup({ ...options, command: 'doctor' }, deps)).status, 'configured_unverified');
+  assert.equal((await runSetup({ ...options, command: 'remove' }, deps)).status, 'removed');
+});
+
+test('invalid callback ports still fail before registration', async t => {
+  const f = await fixture(t);
+  await assert.rejects(runSetup({ ...f.options, kiroVersion: '9.0.0', callbackPort: 0 }, f.deps), { code: 'CALLBACK_PORT' });
   assert.equal(f.count(), 0);
 });
 
-for (const kiroVersion of ['1.2.4', '1.2.37']) {
+for (const kiroVersion of ['1.1.70', '1.2.4', '1.2.37', '1.4.26']) {
   test(`detected Kiro ${kiroVersion} configures a public client with the registered callback`, async t => {
     const f = await fixture(t);
     const result = await runSetup({ ...f.options, kiroVersion: undefined }, { ...f.deps, detectKiroVersion: async () => kiroVersion });
     const registration = f.requests.find(request => request.method === 'POST').body;
     const config = parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'];
     assert.equal(result.status, 'configured_awaiting_authorization');
+    assert.ok(!result.warnings.some(message => message.startsWith('Warning:')));
     assert.equal(registration.token_endpoint_auth_method, 'none');
     assert.deepEqual(registration.redirect_uris, [result.callbackUri]);
     assert.equal(config.oauth.clientId, 'test-client-1');

@@ -1,7 +1,7 @@
 ---
 name: debug-execution
 description: "Diagnose an n8n workflow that failed, produced the wrong result, or stopped running. Use for execution errors, unexpected output, intermittent failures, and workflow repairs."
-compatibility: Requires local Kiro on macOS with Agent Plugins support and n8n 2.34.0 or later with execution read access.
+compatibility: Requires Node.js 22+, local Kiro IDE with Agent Plugins support, and n8n 2.43.7+ with instance-level MCP enabled. Diagnosis requires workflow and execution read access; repairs and testing also require workflow builder tools and workflow write/execute access. All Kiro versions are accepted; untested or undetected versions warn and continue. Live IDE checks cover macOS; helper CI also covers Windows and Linux.
 metadata:
   author: n8n
   version: "1.0.0"
@@ -31,6 +31,12 @@ entry is loaded again or context compaction removes them.
   data has expired, state which evidence is missing.
 
 ## Apply a repair
+
+Before editing or testing, verify that the connection advertises the required
+workflow builder and execution tools and has the workflow read/write/execute
+and execution read permissions needed for the requested operation. If access is
+missing, continue only with permitted read-only diagnosis and explain the access
+needed for the repair. Do not broaden grants or switch connections to bypass it.
 
 Read `update_workflow`'s advertised operation schema; these objects are not
 Workflow SDK factory calls. Follow connect-n8n's missing-schema handling.
