@@ -1,0 +1,27 @@
+docs/release-checklist.md
+  s_d1a51db6638b19::t_f69157a01ef626 44-46,50,54
+skills/connect-n8n/scripts/setup.mjs
+  ai_agent 194,1815-1816
+test/setup/setup.test.mjs
+  s_d1a51db6638b19::t_51ea0b643a0597 6,237-260
+src/setup/kiro.mjs
+  s_d1a51db6638b19::t_fd0e1d2148c89e 27
+src/setup/setup.mjs
+  s_d1a51db6638b19::t_fd0e1d2148c89e 95-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "4abc0929a35c7ca441b52b0cba05bb56179917ed",
+  "prompts": {},
+  "sessions": {
+    "s_d1a51db6638b19": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17856-2ba1-7913-bf34-2d8bf6818dcf",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
