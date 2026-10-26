@@ -97,7 +97,7 @@ Output: { version, edition, integrations: [...], limits: {...} }
 The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Discovery and invocation are two steps:
 
 1. **Discover** via `search_workflows({ query: '<keyword>' })`. Workflows with MCP access on return `availableInMCP: true`. Filter for that.
-2. **Invoke** via `execute_workflow({ workflowId, inputs })`. Read the input schema first with `get_workflow_details`. The `Execute Workflow Trigger` defines typed fields.
+2. **Invoke** via `execute_workflow({ workflowId, inputs, executionMode })`. Read the live tool schema and the workflow's input schema from `get_workflow_details` first; the `Execute Workflow Trigger` defines typed fields. Set `executionMode` to `"manual"` when testing or validating the current workflow, or `"production"` only when intentionally running the published workflow. Both modes can cause real effects: apply the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md) and obtain authorization for those effects before execution.
 
 Output is whatever the workflow's last node returns.
 

@@ -1,7 +1,7 @@
 ---
 name: build-workflow
 description: "Build or change an n8n workflow using the code in the workspace. Use for automation, scheduled jobs, webhooks, or connecting n8n to the application in this repository."
-compatibility: Requires local Kiro on macOS with Agent Plugins support and n8n 2.34.0 or later with workflow builder tools enabled.
+compatibility: Requires Node.js 22+, local Kiro IDE with Agent Plugins support, and n8n 2.43.7+ with instance-level MCP enabled and workflow builder tools enabled. All Kiro versions are accepted; untested or undetected versions warn and continue. Live IDE checks cover macOS; helper CI also covers Windows and Linux.
 metadata:
   author: n8n
   version: "1.0.0"

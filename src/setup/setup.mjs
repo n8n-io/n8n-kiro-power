@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { realpath } from 'node:fs/promises';
 import path from 'node:path';
-import { callbackUri, connectionConfig, detectKiroVersion, requireSupportedKiro, availablePort } from './kiro.mjs';
+import { callbackUri, connectionConfig, detectKiroVersion, kiroVersionWarnings, availablePort } from './kiro.mjs';
 import { defaultName, discover, normalizeEndpoint, register } from './discovery.mjs';
 import { fail } from './errors.mjs';
 import { atomicWrite, editConfig, fingerprint, parseConfig, parseState, readSnapshot, withLock } from './storage.mjs';
@@ -93,17 +93,17 @@ export async function runSetup(options, dependencies = {}) {
     }
 
     const version = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
-    requireSupportedKiro(version);
+    const warnings = [...kiroVersionWarnings(version), consentNote];
     if (record && record.status !== 'ready' && !options.newRegistration) fail('REGISTRATION_UNCERTAIN', 'A previous registration did not finish. Consult the instance administrator, then explicitly retry with repair --new-registration if needed.');
     if (record && options.callbackPort !== undefined && options.callbackPort !== record.callbackPort && command !== 'repair') fail('CALLBACK_CHANGE', 'Changing an existing callback requires repair --callback-port and fresh authorization.');
     const newRegistration = !record || options.newRegistration || (options.callbackPort !== undefined && options.callbackPort !== record.callbackPort);
     const port = newRegistration ? await choosePort(options.callbackPort ?? record?.callbackPort ?? 0) : record.callbackPort;
-    if (options.dryRun) return { ...baseResult, status: 'dry_run', action: newRegistration ? 'register_and_configure' : 'reuse_registration', callbackUri: callbackUri(port), changed: false, warnings: [consentNote] };
+    if (options.dryRun) return { ...baseResult, status: 'dry_run', action: newRegistration ? 'register_and_configure' : 'reuse_registration', callbackUri: callbackUri(port), changed: false, warnings };
 
     let active = record;
     if (newRegistration) {
       active = { endpoint, ...discovery, serverName, configPath: paths.configPath, scope: paths.scope,
-        kiroVersion: version, callbackPort: port, status: 'registering',
+        kiroVersion: version ?? 'unknown', callbackPort: port, status: 'registering',
         ...(installedFingerprint ? { fingerprint: installedFingerprint } : {}) };
       state.connections[key] = active;
       // Journal before POST: a crash/timeout must not cause an automatic duplicate registration.
@@ -133,7 +133,7 @@ export async function runSetup(options, dependencies = {}) {
     return { ...baseResult, status: 'configured_awaiting_authorization', changed,
       registration: newRegistration ? 'created' : 'reused', callbackUri: callbackUri(port),
       next: `In Kiro MCP Servers, authenticate ${serverName}, review consent, then ask Kiro for a read-only workflow search.`,
-      warnings: [consentNote, ...(!options.workspace && paths.scope === 'user' ? ['Workspace and agent overrides were not inspected. Run doctor with --workspace for the project you use.'] : ['Agent-specific overrides must be checked in Kiro.'])] };
+      warnings: [...warnings, ...(!options.workspace && paths.scope === 'user' ? ['Workspace and agent overrides were not inspected. Run doctor with --workspace for the project you use.'] : ['Agent-specific overrides must be checked in Kiro.'])] };
   };
   if (options.dryRun || command === 'doctor') return await action();
   return await withLock(paths.statePath, () => withLock(paths.configPath, action));

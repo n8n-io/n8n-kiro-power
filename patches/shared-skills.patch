@@ -303,3 +303,34 @@ index f153b0c..d2bce8c 100644
  - Common offender: a Set node right before a Data Table Insert / Update node, mapping fields to match schema. Map directly in the Insert/Update node's expression slots.
  - Common offender: a Set node building a body before an Email/Slack node. Build the body in the body field with an expression.
  
+diff --git a/skills/n8n-debugging-official/SKILL.md b/skills/n8n-debugging-official/SKILL.md
+--- a/skills/n8n-debugging-official/SKILL.md
++++ b/skills/n8n-debugging-official/SKILL.md
+@@ -98,10 +98,11 @@
+ 
+ ### Step 5: test with pinned data
+ 
+-```
+-prepare_workflow_pin_data({ workflowId: '<id>' })
+-test_workflow({ workflowId: '<id>' })
+-```
++Read the live tool schemas and follow the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md), including its checks for real effects from unpinned nodes.
++
++1. Call `prepare_workflow_pin_data({ workflowId: '<id>' })` to obtain the node schemas. This returns schemas, not sample data.
++2. Generate sample values matching those schemas and assemble `pinData`, keyed by node name with items wrapped in `{ json: ... }`. Include every required pin and any additional pins needed to avoid unauthorized effects.
++3. Call `test_workflow({ workflowId: '<id>', pinData })` with that generated object. Inspect the returned execution and its pin map before reporting what ran or was simulated.
+ 
+ Controlled input isolates "workflow broken?" from "input weird?". If pinned data works but real input fails, the issue is in real input handling.
+ 
+diff --git a/skills/n8n-extending-mcp-official/SKILL.md b/skills/n8n-extending-mcp-official/SKILL.md
+--- a/skills/n8n-extending-mcp-official/SKILL.md
++++ b/skills/n8n-extending-mcp-official/SKILL.md
+@@ -97,7 +97,7 @@
+ The MCP **doesn't register each tool-flagged workflow as a separately-named MCP tool.** Discovery and invocation are two steps:
+ 
+ 1. **Discover** via `search_workflows({ query: '<keyword>' })`. Workflows with MCP access on return `availableInMCP: true`. Filter for that.
+-2. **Invoke** via `execute_workflow({ workflowId, inputs })`. Read the input schema first with `get_workflow_details`. The `Execute Workflow Trigger` defines typed fields.
++2. **Invoke** via `execute_workflow({ workflowId, inputs, executionMode })`. Read the live tool schema and the workflow's input schema from `get_workflow_details` first; the `Execute Workflow Trigger` defines typed fields. Set `executionMode` to `"manual"` when testing or validating the current workflow, or `"production"` only when intentionally running the published workflow. Both modes can cause real effects: apply the [workflow testing guide](../n8n-workflow-lifecycle-official/references/TESTING.md) and obtain authorization for those effects before execution.
+ 
+ Output is whatever the workflow's last node returns.
+ 

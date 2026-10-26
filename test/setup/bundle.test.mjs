@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { copyFile, readFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, symlink } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
@@ -24,4 +24,36 @@ test('CLI errors are structured, nonzero and do not echo secret arguments', asyn
     const result = JSON.parse(error.stdout);
     return error.code === 1 && result.code === 'INVALID_URL' && !error.stdout.includes('SECRET');
   });
+});
+
+test('CLI runs through a symlinked directory and reports errors instead of silently succeeding', async t => {
+  const f = await fixture(t);
+  const directory = path.join(f.root, 'real directory');
+  const alias = path.join(f.root, 'linked directory');
+  await mkdir(directory);
+  await copyFile('skills/connect-n8n/scripts/setup.mjs', path.join(directory, 'setup.mjs'));
+  await symlink(directory, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const target = path.join(alias, 'setup.mjs');
+  const { stdout } = await promisify(execFile)(process.execPath, [target, '--help']);
+  assert.match(stdout, /configure\|doctor\|repair\|remove/);
+  await assert.rejects(promisify(execFile)(process.execPath, [target, 'configure', '--json']), error => {
+    return error.code === 1 && JSON.parse(error.stdout).code === 'ARGUMENT';
+  });
+});
+
+test('CLI runs through a symlinked file', { skip: process.platform === 'win32' }, async t => {
+  const f = await fixture(t);
+  const target = path.join(f.root, 'setup.mjs');
+  const alias = path.join(f.root, 'linked helper.mjs');
+  await copyFile('skills/connect-n8n/scripts/setup.mjs', target);
+  await symlink(target, alias);
+  const { stdout } = await promisify(execFile)(process.execPath, [alias, '--help']);
+  assert.match(stdout, /configure\|doctor\|repair\|remove/);
+});
+
+test('importing the bundle does not run the CLI', async () => {
+  const target = pathToFileURL(path.resolve('skills/connect-n8n/scripts/setup.mjs')).href;
+  const { stdout, stderr } = await promisify(execFile)(process.execPath, ['--input-type=module', '-e', `await import(${JSON.stringify(target)})`]);
+  assert.equal(stdout, '');
+  assert.equal(stderr, '');
 });

@@ -3,6 +3,7 @@
 
 // src/setup/cli.mjs
 import { parseArgs } from "node:util";
+import { realpath as realpath2 } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 // src/setup/setup.mjs
@@ -172,7 +173,7 @@ async function register(discovery, callbackUri2, options = {}) {
 }
 
 // src/setup/kiro.mjs
-var SUPPORTED_KIRO_VERSIONS = ["1.1.70", "1.2.4", "1.2.37"];
+var TESTED_KIRO_VERSIONS = ["1.1.70", "1.2.4", "1.2.37", "1.4.26"];
 async function detectKiroVersion() {
   if (process.platform === "darwin") {
     try {
@@ -188,10 +189,10 @@ async function detectKiroVersion() {
     return void 0;
   }
 }
-function requireSupportedKiro(version) {
-  if (!SUPPORTED_KIRO_VERSIONS.includes(version)) {
-    fail("KIRO_VERSION", `Setup supports Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(" or ")}. Check Help > About and supply --kiro-version only with the actual installed version.`);
-  }
+function kiroVersionWarnings(version) {
+  if (TESTED_KIRO_VERSIONS.includes(version)) return [];
+  const detected = version ? `Kiro IDE ${version} has not been tested with this helper.` : "The Kiro IDE version could not be detected.";
+  return [`Warning: ${detected} Tested versions: ${TESTED_KIRO_VERSIONS.join(", ")}. Setup will continue. Authenticate in Kiro and verify a read-only workflow search.`];
 }
 async function availablePort(port = 0) {
   if (!Number.isInteger(port) || port !== 0 && (port < 1024 || port > 65535)) {
@@ -1811,12 +1812,12 @@ async function runSetup(options, dependencies = {}) {
       };
     }
     const version = options.kiroVersion ?? await (dependencies.detectKiroVersion ?? detectKiroVersion)();
-    requireSupportedKiro(version);
+    const warnings = [...kiroVersionWarnings(version), consentNote];
     if (record && record.status !== "ready" && !options.newRegistration) fail("REGISTRATION_UNCERTAIN", "A previous registration did not finish. Consult the instance administrator, then explicitly retry with repair --new-registration if needed.");
     if (record && options.callbackPort !== void 0 && options.callbackPort !== record.callbackPort && command !== "repair") fail("CALLBACK_CHANGE", "Changing an existing callback requires repair --callback-port and fresh authorization.");
     const newRegistration = !record || options.newRegistration || options.callbackPort !== void 0 && options.callbackPort !== record.callbackPort;
     const port = newRegistration ? await choosePort(options.callbackPort ?? record?.callbackPort ?? 0) : record.callbackPort;
-    if (options.dryRun) return { ...baseResult, status: "dry_run", action: newRegistration ? "register_and_configure" : "reuse_registration", callbackUri: callbackUri(port), changed: false, warnings: [consentNote] };
+    if (options.dryRun) return { ...baseResult, status: "dry_run", action: newRegistration ? "register_and_configure" : "reuse_registration", callbackUri: callbackUri(port), changed: false, warnings };
     let active = record;
     if (newRegistration) {
       active = {
@@ -1825,7 +1826,7 @@ async function runSetup(options, dependencies = {}) {
         serverName,
         configPath: paths.configPath,
         scope: paths.scope,
-        kiroVersion: version,
+        kiroVersion: version ?? "unknown",
         callbackPort: port,
         status: "registering",
         ...installedFingerprint ? { fingerprint: installedFingerprint } : {}
@@ -1859,7 +1860,7 @@ async function runSetup(options, dependencies = {}) {
       registration: newRegistration ? "created" : "reused",
       callbackUri: callbackUri(port),
       next: `In Kiro MCP Servers, authenticate ${serverName}, review consent, then ask Kiro for a read-only workflow search.`,
-      warnings: [consentNote, ...!options.workspace && paths.scope === "user" ? ["Workspace and agent overrides were not inspected. Run doctor with --workspace for the project you use."] : ["Agent-specific overrides must be checked in Kiro."]]
+      warnings: [...warnings, ...!options.workspace && paths.scope === "user" ? ["Workspace and agent overrides were not inspected. Run doctor with --workspace for the project you use."] : ["Agent-specific overrides must be checked in Kiro."]]
     };
   };
   if (options.dryRun || command === "doctor") return await action();
@@ -1893,7 +1894,7 @@ Options: --name <name> --scope <user|workspace> --workspace <directory>
          --dry-run --json
 Repair:  --new-registration (explicit retry/replacement) or --callback-port
 
-Requires Node.js 22+ and Kiro IDE ${SUPPORTED_KIRO_VERSIONS.join(" or ")}. User scope is the default.
+Requires Node.js 22+ and local Kiro IDE. Tested versions: ${TESTED_KIRO_VERSIONS.join(", ")}. Other or undetected versions warn and continue. User scope is the default.
 The helper configures a public client; sign in and approve access in Kiro.`);
       return;
     }
@@ -1925,7 +1926,8 @@ The helper configures a public client; sign in and approve access in Kiro.`);
     process.exitCode = 1;
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
+var entryPath = process.argv[1] ? await realpath2(process.argv[1]).catch(() => void 0) : void 0;
+if (entryPath && import.meta.url === pathToFileURL(entryPath).href) await main();
 export {
   OPTIONS,
   main,

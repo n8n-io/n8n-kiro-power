@@ -200,22 +200,62 @@ test('later port use does not invalidate a reused registration or cause another 
   assert.equal(f.count(), 1);
 });
 
-test('unsupported Kiro and invalid callback ports do not register', async t => {
+for (const kiroVersion of ['1.0.411', '1.1.69', '1.2.5', '1.2.38', '1.3.11', '1.4.0', '1.4.10', '9.0.0', '1.2.4-beta.1', '1.2.37-beta.1', undefined]) {
+  test(`untested Kiro ${kiroVersion ?? '(undetected)'} warns through dry-run, configure, reuse and repair`, async t => {
+    const f = await fixture(t);
+    const options = { ...f.options, kiroVersion };
+    const deps = { ...f.deps, detectKiroVersion: async () => kiroVersion };
+    const warning = kiroVersion ? `Kiro IDE ${kiroVersion} has not been tested` : 'version could not be detected';
+    const checkWarning = result => {
+      assert.ok(result.warnings.some(message => message.includes(warning) && message.includes('Setup will continue')));
+    };
+    const dryRun = await runSetup({ ...options, dryRun: true }, deps);
+    assert.equal(dryRun.status, 'dry_run');
+    checkWarning(dryRun);
+    assert.deepEqual(await readdir(f.root), []);
+    assert.equal(f.count(), 0);
+    const configured = await runSetup(options, deps);
+    assert.equal(configured.status, 'configured_awaiting_authorization');
+    checkWarning(configured);
+    const config = await readFile(f.configPath, 'utf8');
+    assert.equal(parseConfig(config).mcpServers['n8n-test'].oauth.clientId, 'test-client-1');
+    const reused = await runSetup(options, deps);
+    assert.equal(reused.registration, 'reused');
+    assert.equal(reused.changed, false);
+    checkWarning(reused);
+    assert.equal(await readFile(f.configPath, 'utf8'), config);
+    assert.equal(f.count(), 1);
+    const repaired = await runSetup({ ...options, command: 'repair', newRegistration: true }, deps);
+    assert.equal(repaired.status, 'configured_awaiting_authorization');
+    checkWarning(repaired);
+    assert.equal(f.count(), 2);
+    assert.equal(parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'].oauth.clientId, 'test-client-2');
+  });
+}
+
+test('doctor and remove never require version detection', async t => {
   const f = await fixture(t);
-  for (const kiroVersion of ['1.1.69', '1.2.5', '1.2.38', '1.2.4-beta.1', '1.2.37-beta.1', '9.0.0', undefined]) {
-    await assert.rejects(runSetup({ ...f.options, kiroVersion }, { ...f.deps, detectKiroVersion: async () => kiroVersion }), { code: 'KIRO_VERSION' });
-  }
-  await assert.rejects(runSetup({ ...f.options, callbackPort: 0 }, f.deps), { code: 'CALLBACK_PORT' });
+  await runSetup(f.options, f.deps);
+  const options = { ...f.options, kiroVersion: undefined };
+  const deps = { ...f.deps, detectKiroVersion: () => { throw new Error('unexpected detection'); } };
+  assert.equal((await runSetup({ ...options, command: 'doctor' }, deps)).status, 'configured_unverified');
+  assert.equal((await runSetup({ ...options, command: 'remove' }, deps)).status, 'removed');
+});
+
+test('invalid callback ports still fail before registration', async t => {
+  const f = await fixture(t);
+  await assert.rejects(runSetup({ ...f.options, kiroVersion: '9.0.0', callbackPort: 0 }, f.deps), { code: 'CALLBACK_PORT' });
   assert.equal(f.count(), 0);
 });
 
-for (const kiroVersion of ['1.2.4', '1.2.37']) {
+for (const kiroVersion of ['1.1.70', '1.2.4', '1.2.37', '1.4.26']) {
   test(`detected Kiro ${kiroVersion} configures a public client with the registered callback`, async t => {
     const f = await fixture(t);
     const result = await runSetup({ ...f.options, kiroVersion: undefined }, { ...f.deps, detectKiroVersion: async () => kiroVersion });
     const registration = f.requests.find(request => request.method === 'POST').body;
     const config = parseConfig(await readFile(f.configPath, 'utf8')).mcpServers['n8n-test'];
     assert.equal(result.status, 'configured_awaiting_authorization');
+    assert.ok(!result.warnings.some(message => message.startsWith('Warning:')));
     assert.equal(registration.token_endpoint_auth_method, 'none');
     assert.deepEqual(registration.redirect_uris, [result.callbackUri]);
     assert.equal(config.oauth.clientId, 'test-client-1');

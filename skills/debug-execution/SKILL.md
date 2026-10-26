@@ -1,7 +1,7 @@
 ---
 name: debug-execution
 description: "Diagnose an n8n workflow that failed, produced the wrong result, or stopped running. Use for execution errors, unexpected output, intermittent failures, and workflow repairs."
-compatibility: Requires local Kiro on macOS with Agent Plugins support and n8n 2.34.0 or later with execution read access.
+compatibility: Requires Node.js 22+, local Kiro IDE with Agent Plugins support, and n8n 2.43.7+ with instance-level MCP enabled and execution read access. All Kiro versions are accepted; untested or undetected versions warn and continue. Live IDE checks cover macOS; helper CI also covers Windows and Linux.
 metadata:
   author: n8n
   version: "1.0.0"

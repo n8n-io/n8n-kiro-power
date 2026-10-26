@@ -1,15 +1,80 @@
 # Release checklist
 
-**Status: ready for submission; all acceptance gates passed.** Final release import/setup/native-read verification completed 2026-10-19; full workflow acceptance run 2026-10-16.
+**Status: compatibility update passed local validation and Kiro 1.4.26 live acceptance.**
+The 1.0.2 candidate still needs to be merged and verified through the public
+installation/update path. Record that post-merge result in the release PR;
+this checklist does not claim it has passed. Earlier
+release import/setup/native-read verification completed 2026-10-19; the full
+workflow acceptance run completed 2026-10-16.
 [PR #3](https://github.com/n8n-io/n8n-kiro-power/pull/3) merged on 2026-10-19
 as `f807c6f`, including the final name, description and guidance fixes.
 The [setup guide](setup-helper.md) describes the implemented commands.
 The package contains skills and a bundled helper; it ships no root `mcp.json`.
 
-The initial release supports macOS only. Setup accepts local Kiro IDE 1.1.70,
-1.2.4 and 1.2.37 with Node.js 22+. Newer Kiro versions are outside this release;
-version-specific live validation is recorded below. n8n 2.34.0 is
-the workflow tool-name floor, not a verified public-OAuth minimum.
+Setup accepts all local Kiro IDE versions with Node.js 22+, including future
+and undetected versions. The tested-version list (1.1.70, 1.2.4, 1.2.37, 1.4.26) is
+informational: other versions warn and continue. Live IDE evidence currently
+covers macOS; helper CI covers macOS, Windows and Linux.
+
+The supported n8n minimum is **2.43.7**, the oldest released self-hosted version
+with recorded public OAuth and full workflow acceptance below. The earlier
+Cloud 2.43.5 run remains historical evidence. This conservative baseline does
+not claim older releases are incompatible. The per-client connect screen in
+[n8n 2.33.0](https://docs.n8n.io/connect/connect-to-n8n-mcp-server/) and the
+2.34.0 tool-name changes alone do not establish end-to-end compatibility.
+
+## Compatibility update (2026-10-26)
+
+- [x] Align all three entry skills on the supported n8n 2.43.7+ baseline and
+      Kiro version policy, preserving the macOS live-test and cross-platform
+      helper-CI coverage distinction.
+- [x] Correct the bundled debugging example to generate and pass `pinData`,
+      and the execution example to select an explicit `executionMode`. Keep
+      these corrections in `patches/shared-skills.patch` and regenerate the
+      snapshot from the pinned upstream commit. These instruction fixes do not
+      establish the cause of historical missing-argument failures or constitute
+      a new live workflow test.
+- [x] Assign patch version **1.0.2** to the manifest and package metadata so
+      support can distinguish this candidate from the 1.0.1 release.
+- [x] Replace the exact version gate with a warning for untested or undetected
+      versions, including configure, repair and dry-run. Doctor and remove do
+      not require version detection.
+- [x] Run `npm run build` and `npm run check`: **85/85 tests passed** on
+      macOS / Node 24.19.0, including mock-server setup across older, current,
+      future, prerelease and undetected Kiro versions. The check also verifies
+      bundle reproducibility, packaging and documented commands. Repeated after
+      the guidance corrections and 1.0.2 version bump with the same passing result.
+      `npm run skills:check` also passed against the pinned upstream commit plus
+      local corrections.
+- [x] Resolve the helper launch path before the entry-point comparison. Cover
+      symlinked directories, symlinked files and import without CLI execution.
+- [x] Keep the final Power name **`n8n-workflow-dev`**, confirmed by the maintainer
+      on 2026-10-26. The manifest, README and connection skill use this name.
+- [x] Point support to the [n8n community](https://community.n8n.io). GitHub's
+      repository API reports `has_issues: false`; do not send users to Issues.
+- [x] Use six specific keywords; remove the generic workflow, automation and
+      integration keywords.
+- [x] Run a real OAuth sign-in and native workflow read on Kiro **1.4.26**.
+      On 2026-10-26, the official updater installed 1.4.26 on macOS. A local
+      folder import installed the revised `n8n-workflow-dev` candidate with
+      three entry skills and six keywords. The installed manifest, helper,
+      connection skill and setup guide matched the working tree byte-for-byte.
+      The installed helper created a public client and workspace connection
+      `n8n-kiro-1426` to an isolated n8n **2.45.0 development** instance built
+      from master `0cd0787c36a`. The server used a fresh database on loopback
+      port 5696. Setup detected 1.4.26, warned and continued. The user completed
+      browser sign-in/consent; Kiro logged the callback, successful OAuth
+      completion and connection. Native `search_workflows` returned one match,
+      and native `get_workflow_details` returned synthetic workflow
+      `dhyTiWMitZ88GvqI`, **Kiro 1.4.26 acceptance 2026-10-26**, with
+      `nodeCount: 1`, `active: false` and `activeVersionId: null`. Both native
+      tool responses were inspected in Kiro. The read test did not execute or
+      modify a workflow and used no REST fallback. The fixture was seeded
+      separately before the test. An initial browser attempt timed out; a
+      fresh attempt succeeded with the same registration. After this pass,
+      1.4.26 was added to the informational tested-version list.
+      This development-master read check does not replace the released-server
+      build/run/debug acceptance or lower the supported n8n minimum.
 
 ## Recorded evidence
 
@@ -141,27 +206,47 @@ passwords, and private payloads out of evidence.
       revocation and replacement-registration refresh with the installed package.
       Cross-project reuse, revocation/replacement and a native read after the
       replacement access token's initial expiry passed.
-- [x] **IDE platform coverage:** the initial release is explicitly limited to
-      macOS, as agreed on October 16. Native installation, setup, OAuth, workflow
-      operations and restart have been exercised on macOS 27.0.1. Windows/Linux
-      helper CI does not establish support for their IDE flows.
+- [x] **IDE platform coverage recorded:** native installation, setup, OAuth,
+      workflow operations and restart have been exercised on macOS 27.0.1.
+      Setup no longer restricts Kiro versions or requires successful detection
+      on any OS. Windows/Linux helper CI does not establish live IDE coverage.
 - [x] **Legacy migration:** remove old bundled duplicates through Kiro while
       preserving separately managed OAuth and token configuration. Native OAuth
       access and exact configuration preservation passed as recorded above.
 
 ## Publication
 
-The release package is available from the public repository's default branch.
-There is no npm publication or hosted service deployment. All acceptance gates
-are complete for the supported release. The pinned-testing argument failures,
-their unknown cause and the verified manual-execution fallback remain documented
-above as known limitations. Newer Kiro compatibility is outside this release.
+The release package is distributed from the public repository's default branch.
+There is no npm publication or hosted service deployment. On 2026-10-26, the
+[public Kiro registry](https://prod.download.desktop.kiro.dev/powers/default_registry.json)
+already listed this repository's `main` branch as **n8n Workflow Automation**,
+with registry identifier `n8n` and an n8n icon. The package identifier remains
+`n8n-workflow-dev`. This compatibility change updates that existing source.
 
-The maintainer confirmed on 2026-10-19 that submission is handled separately.
-Submission details, publisher terms and registry approval are owned by that
-process; this repository does not claim a listing approval or require a second
-submission. The [submission requirements](https://kiro.dev/powers/submit/) were
-checked against the manifest, privacy/support links and MCP GA evidence.
+The compatibility helper passed the Kiro 1.4.26 OAuth/native-read acceptance
+recorded above. The final 1.0.2 package passed local checks. The later guidance
+corrections were checked as
+package changes; they have not had a separate live workflow run. Historical
+pinned-testing argument failures, their unknown cause and the verified
+manual-execution fallback remain documented as known limitations.
+
+The following delivery checks remain open until the release PR records their
+results. Record the merge commit, Kiro version, installed package version and
+observations there; no documentation-only follow-up PR is required to close them.
+
+- [ ] **Merged candidate:** pass the release PR's CI and merge version 1.0.2.
+- [ ] **Public installation/update:** on Kiro 1.4.26, install the catalogue entry
+      or use **Check for updates → Install updates** on an existing installation.
+      Verify version 1.0.2, the corrected helper and guidance, exactly three entry
+      skills, and the expected n8n logo. Confirm an existing saved connection is
+      preserved and one native workflow read succeeds. The October 26 folder
+      import does not satisfy this final distribution check.
+
+The maintainer confirmed on 2026-10-19 that publisher communication is handled
+separately. Submission details and publisher terms remain owned by that process;
+this update does not require a duplicate submission. The
+[submission requirements](https://kiro.dev/powers/submit/) were checked against
+the manifest, privacy/support links and MCP GA evidence.
 
 [n8n PR #39637](https://github.com/n8n-io/n8n/pull/39637) separately fixes HTTP
 Basic client authentication. Public-client OAuth does not require that PR or a
