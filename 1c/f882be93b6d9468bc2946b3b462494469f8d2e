@@ -1,0 +1,19 @@
+docs/release-checklist.md
+  s_d1a51db6638b19::t_f5111943497577 3-7,241-243,245-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1cf882be93b6d9468bc2946b3b462494469f8d2e",
+  "prompts": {},
+  "sessions": {
+    "s_d1a51db6638b19": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a17856-2ba1-7913-bf34-2d8bf6818dcf",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Arvin Ansari <arvin.ansari@n8n.io>"
+    }
+  }
+}
