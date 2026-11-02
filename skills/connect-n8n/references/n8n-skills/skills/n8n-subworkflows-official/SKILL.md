@@ -42,7 +42,7 @@ About to write a chunk of logic?
     └── Don't extract. Extra workflow boundary for nothing.
 ```
 
-When the only motivation is a cleaner canvas (not reuse, isolation, testability, or an agent tool), a **canvas node group** is the tool for readability-only sectioning: faster (no sub-execution per call) and simpler (no input/output contract), with the logic staying inline. Group it where the section forms a valid group (connected, single entry/exit); split a too-branchy section into smaller groups or leave it ungrouped (a sticky note annotates, it doesn't group). Extract to a sub-workflow only when you genuinely need reuse, isolation, independent testing, or an agent tool. See `n8n-workflow-lifecycle-official` Readability.
+When the only motivation is a cleaner canvas (not reuse, isolation, testability, or an agent tool), a **canvas node group** is the tool for readability-only sectioning: faster (no sub-execution per call) and simpler (no input/output contract), with the logic staying inline. Group it where the section is connected, trigger-free, and faces outward at no more than one member in each direction (`n8n-workflow-lifecycle-official` `references/NODE_GROUPS.md`); split a too-branchy section into smaller valid slices rather than leaving the whole stage ungrouped (a sticky note annotates, it doesn't group). Extract to a sub-workflow only when you genuinely need reuse, isolation, independent testing, or an agent tool. See `n8n-workflow-lifecycle-official` Readability.
 
 ## Stateless vs. stateful sub-workflows
 
@@ -182,7 +182,7 @@ This is *not* the same as a 20-node workflow with 20 inline transformations. Tha
 - Inspecting a section means opening the sub-workflow it calls. That's encapsulation.
 - Orchestration logic at the top level is visible without reading implementations.
 
-If your workflow has 15+ nodes and isn't mostly Execute Workflow calls and branches, extract more where reuse or testing warrants it, and group the rest inline (node groups).
+If your workflow is well past 7 top-level boxes and isn't mostly Execute Workflow calls and branches, extract more where reuse or testing warrants it, and group the rest inline (node groups).
 
 ## When NOT to extract
 
@@ -265,7 +265,7 @@ When using passthrough specifically for the no-input case:
 - **Start the body with a `Set` (Edit Fields) node in "Keep Only Set" mode with no fields.** This clears the caller's JSON so downstream nodes don't accidentally read fields from whatever shape the caller happened to pass. Without it, the body silently picks up whatever the caller forwarded.
 - **Add a sticky note on the trigger documenting that no inputs are expected.** Future readers (and the agent re-wiring this as a tool) need to know passthrough isn't here for binary, it's here because the schema is empty by design.
 
-Agent-tool wiring still works in the no-input case: `toolWorkflow` accepts a sub-workflow whose input mapping has no fields. The agent's only decision is whether to invoke. The pattern from `n8n-agents-official` `references/TOOLS.md` ("zero `fromAi` parameters") applies directly.
+Agent-tool wiring still works in the no-input case: `toolWorkflow` accepts a sub-workflow whose input mapping has no fields. The agent's only decision is whether to invoke. The pattern from `n8n-ai-nodes-official` `references/TOOLS.md` ("zero `fromAi` parameters") applies directly.
 
 ### Other conventions
 
@@ -277,7 +277,7 @@ Agent-tool wiring still works in the no-input case: `toolWorkflow` accepts a sub
 
   Common slip: a sub-workflow has a "fresh" path (data just produced, natural shape) and a "cached" path (data just read from a `_object` column, still stringified). Wrong instinct: stringify the fresh path "to match" the cached path. Right instinct: parse the cached path so both return the natural shape. Callers shouldn't have to know which they got.
 
-For sub-workflows wired as agent tools specifically, see `n8n-agents-official` `references/SUBWORKFLOW_AS_TOOL.md`.
+For sub-workflows wired as agent tools specifically, see `n8n-ai-nodes-official` `references/SUBWORKFLOW_AS_TOOL.md` (AI Agent node) or `n8n-agents-official` `references/TOOLS.md` (first-class n8n Agent). A first-class Agent's workflow tool must also be in the same project as the Agent and published, and its `fixed` / `expression` inputs can't read the caller's trigger data.
 
 ## Calling sub-workflows: `Execute Workflow` modes
 
